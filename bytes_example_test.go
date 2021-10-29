@@ -8,7 +8,7 @@ import (
 
 func ExampleNew() {
 	// len: 0, cap: 8192 (Default maximum)
-	bs := bytespool.Make()
+	bs := bytespool.MakeMax()
 
 	bs = append(bs, "abc"...)
 	fmt.Printf("len: %d, cap: %d, %s\n", len(bs), cap(bs), bs)

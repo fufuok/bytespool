@@ -26,8 +26,14 @@ please see: [examples](examples)
 package bytespool // import "github.com/fufuok/bytespool"
 
 func InitDefaultPools(minSize, maxSize int)
-func Make(capacity ...int) []byte
+func Make(size int) []byte
+func Make64(size uint64) []byte
+func MakeMax() []byte
+func MakeMin() []byte
 func New(size int) []byte
+func New64(size uint64) []byte
+func NewMax() []byte
+func NewMin() []byte
 func Release(buf []byte) bool
 type CapacityPools struct{ ... }
     func NewCapacityPools(minSize, maxSize int) *CapacityPools
@@ -46,7 +52,7 @@ import (
 
 func main() {
 	// len: 0, capacity: 8192 (Default maximum)
-	bs := bytespool.Make()
+	bs := bytespool.MakeMax()
 
 	// Use...
 	bs = append(bs, "abc"...)
@@ -113,14 +119,14 @@ bs := bytespool.Make(10)
 fmt.Printf("len: %d, cap: %d\n", len(bs), cap(bs))
 bytespool.Release(bs)
 
-bs = bytespool.Make()
+bs = bytespool.MakeMax()
 fmt.Printf("len: %d, cap: %d\n", len(bs), cap(bs))
 bytespool.Release(bs)
 
 bs = bytespool.New(10240)
 fmt.Printf("len: %d, cap: %d\n", len(bs), cap(bs))
 ok := bytespool.Release(bs)
-fmt.Printf("Discard: %v", !ok)
+fmt.Printf("Discard: %v\n", !ok)
 
 // Output:
 // len: 0, cap: 512
@@ -133,7 +139,7 @@ fmt.Printf("Discard: %v", !ok)
 
 ```go
 bspool := bytespool.NewCapacityPools(8, 1024)
-bs := bspool.Make()
+bs := bspool.MakeMax()
 bspool.Release(bs)
 bs = bspool.Make(64)
 bspool.Release(bs)
@@ -149,18 +155,18 @@ goos: linux
 goarch: amd64
 pkg: github.com/fufuok/bytespool
 cpu: Intel(R) Xeon(R) Gold 6151 CPU @ 3.00GHz
-BenchmarkCapacityPools/New-4                     27641402                43.38 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/New-4                     26251407                43.46 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/Make-4                    27594026                44.56 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/Make-4                    27791390                43.31 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/MakeMax-4                 47187982                24.42 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/MakeMax-4                 46407331                25.80 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/New.Parallel-4           100000000                11.11 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/New.Parallel-4           100000000                10.89 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/Make.Parallel-4          100000000                10.94 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/Make.Parallel-4          100000000                11.13 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/MakeMax.Parallel-4       186346058                6.406 ns/op            0 B/op          0 allocs/op
-BenchmarkCapacityPools/MakeMax.Parallel-4       183609024                6.290 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/New-4                     27477343                44.06 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/New-4                     26587846                43.59 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/Make-4                    26847370                44.09 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/Make-4                    27189642                43.44 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/MakeMax-4                 52711242                22.77 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/MakeMax-4                 52321828                24.49 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/New.Parallel-4           100000000                10.55 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/New.Parallel-4           100000000                10.52 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/Make.Parallel-4          100000000                10.48 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/Make.Parallel-4          100000000                10.57 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/MakeMax.Parallel-4       204589562                5.929 ns/op            0 B/op          0 allocs/op
+BenchmarkCapacityPools/MakeMax.Parallel-4       199840848                5.931 ns/op            0 B/op          0 allocs/op
 ```
 
 

@@ -68,22 +68,22 @@ func newBytesPool(size int) *bytesPool {
 	}
 }
 
-func Make(capacity ...int) []byte {
-	return defaultCapacityPools.Make(capacity...)
-}
-
 // Make return an empty bytes pointer variable.
 // Length is 0, default capacity is maxSize.
-func (p *CapacityPools) Make(capacity ...int) []byte {
-	size := p.maxSize
-	if len(capacity) > 0 && capacity[0] > 0 {
-		size = capacity[0]
-	}
-	return p.New(size)[:0]
+func (p *CapacityPools) Make(capacity int) []byte {
+	return p.New(capacity)[:0]
 }
 
-func New(size int) []byte {
-	return defaultCapacityPools.New(size)
+func (p *CapacityPools) Make64(capacity uint64) []byte {
+	return p.New(int(capacity))[:0]
+}
+
+func (p *CapacityPools) MakeMax() []byte {
+	return p.New(p.maxSize)[:0]
+}
+
+func (p *CapacityPools) MakeMin() []byte {
+	return p.New(p.minSize)[:0]
 }
 
 // New return bytes of the specified size.
@@ -107,8 +107,16 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 	return
 }
 
-func Release(buf []byte) bool {
-	return defaultCapacityPools.Release(buf)
+func (p *CapacityPools) New64(size uint64) []byte {
+	return p.New(int(size))
+}
+
+func (p *CapacityPools) NewMax() []byte {
+	return p.New(p.maxSize)
+}
+
+func (p *CapacityPools) NewMin() []byte {
+	return p.New(p.minSize)
 }
 
 // Release put it back into the pool of the corresponding scale.
@@ -146,4 +154,40 @@ func (p *CapacityPools) getPool(size int) *bytesPool {
 	}
 
 	return p.pools[idx]
+}
+
+func Make(size int) []byte {
+	return defaultCapacityPools.Make(size)
+}
+
+func Make64(size uint64) []byte {
+	return defaultCapacityPools.Make64(size)
+}
+
+func MakeMax() []byte {
+	return defaultCapacityPools.MakeMax()
+}
+
+func MakeMin() []byte {
+	return defaultCapacityPools.MakeMin()
+}
+
+func New(size int) []byte {
+	return defaultCapacityPools.New(size)
+}
+
+func New64(size uint64) []byte {
+	return defaultCapacityPools.New64(size)
+}
+
+func NewMax() []byte {
+	return defaultCapacityPools.NewMax()
+}
+
+func NewMin() []byte {
+	return defaultCapacityPools.NewMin()
+}
+
+func Release(buf []byte) bool {
+	return defaultCapacityPools.Release(buf)
 }

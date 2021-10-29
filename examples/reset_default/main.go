@@ -13,7 +13,7 @@ func main() {
 	fmt.Printf("len: %d, cap: %d\n", len(bs), cap(bs))
 	bytespool.Release(bs)
 
-	bs = bytespool.Make()
+	bs = bytespool.MakeMax()
 	fmt.Printf("len: %d, cap: %d\n", len(bs), cap(bs))
 	bytespool.Release(bs)
 

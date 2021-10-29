@@ -8,7 +8,7 @@ import (
 
 func main() {
 	// len: 0, capacity: 8192 (Default maximum)
-	bs := bytespool.Make()
+	bs := bytespool.MakeMax()
 
 	// Use...
 	bs = append(bs, "abc"...)
