@@ -20,7 +20,9 @@ go get -u github.com/fufuok/bytespool
 
 ## 📚 Examples
 
-please see: [examples](examples)
+Please see: [examples](examples)
+
+Release warning: [examples/warning](examples/warning)
 
 ```go
 package bytespool // import "github.com/fufuok/bytespool"
