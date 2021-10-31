@@ -122,11 +122,12 @@ func (p *CapacityPools) NewMin() []byte {
 // Release put it back into the pool of the corresponding scale.
 // Discard buffer larger than the maximum capacity.
 func (p *CapacityPools) Release(buf []byte) bool {
-	if cap(buf) == 0 || len(buf) > p.maxSize {
+	n := cap(buf)
+	if n == 0 || n > p.maxSize {
 		return false
 	}
 	bp := p.getPool(cap(buf))
-	if bp == nil {
+	if bp == nil || n != bp.capacity {
 		return false
 	}
 	// array pointer
