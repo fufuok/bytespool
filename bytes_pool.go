@@ -126,8 +126,8 @@ func (p *CapacityPools) Release(buf []byte) bool {
 	if n == 0 || n > p.maxSize {
 		return false
 	}
-	bp := p.getPool(cap(buf))
-	if bp == nil || n != bp.capacity {
+	bp := p.getPool(n)
+	if n != bp.capacity {
 		return false
 	}
 	// array pointer

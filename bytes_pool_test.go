@@ -126,6 +126,31 @@ func TestCapacityPools_Boundary(t *testing.T) {
 	if cap(buf) < defaultMaxSize {
 		t.Fatalf("expect buffer cap >= %d, but got %d", defaultMaxSize, cap(buf))
 	}
+
+	buf = make([]byte, 0, 2)
+	if !pools.Release(buf) {
+		t.Fatal("expect to release the buffer successfully, but not")
+	}
+
+	buf = make([]byte, 1, 2)
+	if !pools.Release(buf) {
+		t.Fatal("expect to release the buffer successfully, but not")
+	}
+
+	buf = make([]byte, 1, 1)
+	if pools.Release(buf) {
+		t.Fatal("expect to release the buffer failure, but not")
+	}
+
+	buf = make([]byte, 8, 8)
+	if pools.Release(buf) {
+		t.Fatal("expect to release the buffer failure, but not")
+	}
+
+	buf = nil
+	if pools.Release(buf) {
+		t.Fatal("expect to release the buffer failure, but not")
+	}
 }
 
 func TestCapacityPools_Default(t *testing.T) {
