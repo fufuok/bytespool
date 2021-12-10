@@ -3,6 +3,7 @@ package bytespool
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"runtime/debug"
 	"testing"
 )
@@ -17,6 +18,7 @@ func TestCapacityPools(t *testing.T) {
 		bytesLength int
 		releaseOK   bool
 	}{
+		{-1, 64, 0, true},
 		{0, 64, 0, true},
 		{64, 64, 64, true},
 		{128, 128, 128, true},
@@ -58,10 +60,6 @@ func TestCapacityPools(t *testing.T) {
 			}
 		})
 	}
-
-	t.Run("MinMax", func(t *testing.T) {
-
-	})
 }
 
 func TestCapacityPools_Make64(t *testing.T) {
@@ -151,6 +149,22 @@ func TestCapacityPools_Boundary(t *testing.T) {
 	if pools.Release(buf) {
 		t.Fatal("expect to release the buffer failure, but not")
 	}
+
+	pools = NewCapacityPools(math.MinInt64, math.MaxInt64)
+	if pools.minSize != minCapacity {
+		t.Fatalf("expect min capacity is %d, but got %d", minCapacity, pools.minSize)
+	}
+	if pools.maxSize != math.MaxInt32+1 {
+		t.Fatalf("expect max capacity is %d, but got %d", math.MaxInt32, pools.maxSize)
+	}
+
+	pools = NewCapacityPools(math.MaxInt64, math.MaxInt64)
+	if pools.minSize != math.MaxInt32+1 {
+		t.Fatalf("expect min capacity is %d, but got %d", math.MaxInt32, pools.minSize)
+	}
+	if pools.maxSize != math.MaxInt32+1 {
+		t.Fatalf("expect max capacity is %d, but got %d", math.MaxInt32, pools.maxSize)
+	}
 }
 
 func TestCapacityPools_Default(t *testing.T) {
@@ -181,7 +195,7 @@ func TestCapacityPools_Default(t *testing.T) {
 
 	Release(newBuf)
 
-	buf8 := New(8)
+	buf8 := Get(8)
 	copy(buf8, "12345678")
 	if string(buf8) != "12345678" {
 		t.Fatal("expect copy result is 123456789, but not")
@@ -192,11 +206,11 @@ func TestCapacityPools_Default(t *testing.T) {
 	// Disable GC to test re-acquire the same data
 	gc := debug.SetGCPercent(-1)
 
-	Release(buf8)
+	Put(buf8)
 
 	buf16 := New(16)
 	if &buf8[0] != &buf16[0] {
-		t.Fatal("expect buf8 and buf16to be the same array")
+		t.Fatal("expect buf8 and buf16 to be the same array")
 	}
 	if string(buf16[:9]) != "123456789" {
 		t.Fatal("expect the buf8 is the buf16, but not")

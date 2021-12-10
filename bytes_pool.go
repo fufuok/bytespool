@@ -2,6 +2,7 @@ package bytespool
 
 import (
 	"math"
+	"math/bits"
 	"reflect"
 	"runtime"
 	"sync"
@@ -20,6 +21,7 @@ type CapacityPools struct {
 	minSize  int
 	maxSize  int
 	maxIndex int
+	decIndex int
 	pools    []*bytesPool
 }
 
@@ -34,24 +36,33 @@ func InitDefaultPools(minSize, maxSize int) {
 }
 
 // NewCapacityPools divide into multiple pools according to the capacity scale.
+// Maximum range of byte slice pool: [minCapacity,1<<31]
 func NewCapacityPools(minSize, maxSize int) *CapacityPools {
 	var pools []*bytesPool
+	if maxSize > math.MaxInt32 {
+		maxSize = 1 << 31
+	}
+	if maxSize < minCapacity {
+		maxSize = minCapacity
+	}
+	if minSize > maxSize {
+		minSize = maxSize
+	}
 	if minSize < minCapacity {
 		minSize = minCapacity
 	}
-	if maxSize < minSize {
-		maxSize = minSize
-	}
 
-	for i := minSize; i < maxSize; i *= 2 {
-		pools = append(pools, newBytesPool(i))
+	min := getIndex(minSize)
+	max := getIndex(maxSize)
+	for i := min; i <= max; i++ {
+		pools = append(pools, newBytesPool(1<<i))
 	}
-	pools = append(pools, newBytesPool(maxSize))
 
 	return &CapacityPools{
 		minSize:  minSize,
 		maxSize:  maxSize,
 		maxIndex: len(pools) - 1,
+		decIndex: min,
 		pools:    pools,
 	}
 }
@@ -89,6 +100,13 @@ func (p *CapacityPools) MakeMin() []byte {
 // New return bytes of the specified size.
 // Length is size, may contain old data.
 func (p *CapacityPools) New(size int) (buf []byte) {
+	if size < 0 {
+		size = 0
+	}
+	if size > p.maxSize {
+		return make([]byte, size)
+	}
+
 	bp := p.getPool(size)
 	if bp == nil {
 		return make([]byte, size)
@@ -105,6 +123,10 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 	slice.Cap = bp.capacity
 	runtime.KeepAlive(ptr)
 	return
+}
+
+func (p *CapacityPools) Get(size int) []byte {
+	return p.New(size)
 }
 
 func (p *CapacityPools) New64(size uint64) []byte {
@@ -135,6 +157,10 @@ func (p *CapacityPools) Release(buf []byte) bool {
 	return true
 }
 
+func (p *CapacityPools) Put(buf []byte) {
+	p.Release(buf)
+}
+
 func (p *CapacityPools) getPool(size int) *bytesPool {
 	if size <= p.minSize {
 		return p.pools[0]
@@ -145,16 +171,11 @@ func (p *CapacityPools) getPool(size int) *bytesPool {
 	if size > p.maxSize {
 		return nil
 	}
+	return p.pools[getIndex(size)-p.decIndex]
+}
 
-	idx := int(math.Ceil(math.Log2(float64(size) / float64(p.minSize))))
-	if idx < 0 {
-		idx = 0
-	}
-	if idx > p.maxIndex {
-		return nil
-	}
-
-	return p.pools[idx]
+func getIndex(n int) int {
+	return bits.Len32(uint32(n) - 1)
 }
 
 func Make(size int) []byte {
@@ -177,6 +198,10 @@ func New(size int) []byte {
 	return defaultCapacityPools.New(size)
 }
 
+func Get(size int) []byte {
+	return defaultCapacityPools.Get(size)
+}
+
 func New64(size uint64) []byte {
 	return defaultCapacityPools.New64(size)
 }
@@ -191,4 +216,8 @@ func NewMin() []byte {
 
 func Release(buf []byte) bool {
 	return defaultCapacityPools.Release(buf)
+}
+
+func Put(buf []byte) {
+	defaultCapacityPools.Put(buf)
 }

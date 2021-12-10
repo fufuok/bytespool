@@ -54,15 +54,15 @@ func BenchmarkCapacityPools(b *testing.B) {
 // goarch: amd64
 // pkg: github.com/fufuok/bytespool
 // cpu: Intel(R) Xeon(R) Gold 6151 CPU @ 3.00GHz
-// BenchmarkCapacityPools/New-4                     27477343                44.06 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/New-4                     26587846                43.59 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/Make-4                    26847370                44.09 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/Make-4                    27189642                43.44 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/MakeMax-4                 52711242                22.77 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/MakeMax-4                 52321828                24.49 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/New.Parallel-4           100000000                10.55 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/New.Parallel-4           100000000                10.52 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/Make.Parallel-4          100000000                10.48 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/Make.Parallel-4          100000000                10.57 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/MakeMax.Parallel-4       204589562                5.929 ns/op            0 B/op          0 allocs/op
-// BenchmarkCapacityPools/MakeMax.Parallel-4       199840848                5.931 ns/op            0 B/op          0 allocs/op
+// BenchmarkCapacityPools/New-4            56386340                21.24 ns/op            0 B/op          0 allocs/op
+// BenchmarkCapacityPools/New-4            56503125                21.21 ns/op            0 B/op          0 allocs/op
+// BenchmarkCapacityPools/Make-4           56200932                21.40 ns/op            0 B/op          0 allocs/op
+// BenchmarkCapacityPools/Make-4           56215285                21.43 ns/op            0 B/op          0 allocs/op
+// BenchmarkCapacityPools/MakeMax-4        56522522                21.15 ns/op            0 B/op          0 allocs/op
+// BenchmarkCapacityPools/MakeMax-4        56000730                21.45 ns/op            0 B/op          0 allocs/op
+// BenchmarkCapacityPools/New.Parallel-4           217137915                5.480 ns/op           0 B/op          0 allocs/op
+// BenchmarkCapacityPools/New.Parallel-4           212783748                5.912 ns/op           0 B/op          0 allocs/op
+// BenchmarkCapacityPools/Make.Parallel-4          212007224                5.541 ns/op           0 B/op          0 allocs/op
+// BenchmarkCapacityPools/Make.Parallel-4          211065468                5.583 ns/op           0 B/op          0 allocs/op
+// BenchmarkCapacityPools/MakeMax.Parallel-4       217466509                5.525 ns/op           0 B/op          0 allocs/op
+// BenchmarkCapacityPools/MakeMax.Parallel-4       218557538                5.524 ns/op           0 B/op          0 allocs/op
