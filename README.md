@@ -10,6 +10,7 @@ The existing byte slices are stored in groups according to the capacity length r
 - Get byte slices always succeed without panic.
 - Optional length of 0 or fixed-length byte slices.
 - Automatic garbage collection of big-byte slices.
+- BufPool implements the httputil.BufferPool interface.
 - High performance, See: [Benchmarks](#-benchmarks).
 
 ## ⚙️ Installation
@@ -24,9 +25,12 @@ Please see: [examples](examples)
 
 Release warning: [examples/warning](examples/warning)
 
+Simple reverse proxy: [examples/reverse_proxy](examples/reverse_proxy)
+
 ```go
 package bytespool // import "github.com/fufuok/bytespool"
 
+func Get(size int) []byte
 func InitDefaultPools(minSize, maxSize int)
 func Make(size int) []byte
 func Make64(size uint64) []byte
@@ -36,7 +40,10 @@ func New(size int) []byte
 func New64(size uint64) []byte
 func NewMax() []byte
 func NewMin() []byte
+func Put(buf []byte)
 func Release(buf []byte) bool
+type BufPool struct{ ... }
+    func NewBufPool(size int) *BufPool
 type CapacityPools struct{ ... }
     func NewCapacityPools(minSize, maxSize int) *CapacityPools
 ```
@@ -147,6 +154,20 @@ bs = bspool.Make(64)
 bspool.Release(bs)
 bs = bspool.New(128)
 bspool.Release(bs)
+```
+
+### ♾ BufPool
+
+```go
+bufPool := bytespool.NewBufPool(32 * 1024)
+bs := bufPool.Get()
+
+data := []byte("test")
+n := copy(bs, data)
+// n: 4, bs: test
+fmt.Printf("n: %d, bs: %s", n, bs[:n])
+
+bufPool.Put(bs)
 ```
 
 ## 🤖 Benchmarks
