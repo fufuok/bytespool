@@ -117,10 +117,10 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 		return make([]byte, size, bp.capacity)
 	}
 
-	slice := (*reflect.SliceHeader)(unsafe.Pointer(&buf))
-	slice.Data = uintptr(ptr)
-	slice.Len = size
-	slice.Cap = bp.capacity
+	sh := (*reflect.SliceHeader)(unsafe.Pointer(&buf))
+	sh.Data = uintptr(ptr)
+	sh.Len = size
+	sh.Cap = bp.capacity
 	runtime.KeepAlive(ptr)
 	return
 }
