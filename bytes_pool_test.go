@@ -168,11 +168,23 @@ func TestCapacityPools_Boundary(t *testing.T) {
 }
 
 func TestCapacityPools_Default(t *testing.T) {
-	if defaultCapacityPools.maxIndex+1 != 13 {
-		t.Fatalf("expect count default pools is 13, but got %d", defaultCapacityPools.maxIndex+1)
+	if defaultCapacityPools.maxIndex+1 != getIndex(defaultMaxSize) {
+		t.Fatalf("expect count default pools is %d, but got %d",
+			getIndex(defaultMaxSize), defaultCapacityPools.maxIndex+1)
 	}
 
-	buf := MakeMax()
+	buf := Make(defaultMaxSize + 1)
+	if len(buf) != 0 {
+		t.Fatalf("expect buffer len is 0, but got %d", len(buf))
+	}
+	if cap(buf) <= defaultMaxSize {
+		t.Fatalf("expect buffer cap > %d, but got %d", defaultMaxSize, cap(buf))
+	}
+	if Release(buf) {
+		t.Fatal("expect to release the buffer failure, but not")
+	}
+
+	buf = MakeMax()
 	if len(buf) != 0 {
 		t.Fatalf("expect buffer len is 0, but got %d", len(buf))
 	}
@@ -183,7 +195,12 @@ func TestCapacityPools_Default(t *testing.T) {
 	abc := []byte("abc")
 	buf = append(buf, abc...)
 
-	Release(buf)
+	// Disable GC to test re-acquire the same data
+	gc := debug.SetGCPercent(-1)
+
+	if !Release(buf) {
+		t.Fatal("expect to release the buffer successfully, but not")
+	}
 
 	newBuf := New(defaultMaxSize)
 	if fmt.Sprintf("%p", newBuf) != fmt.Sprintf("%p", buf) {
@@ -193,7 +210,9 @@ func TestCapacityPools_Default(t *testing.T) {
 		t.Fatal("expect that newBuf may contain old data, but not")
 	}
 
-	Release(newBuf)
+	if !Release(newBuf) {
+		t.Fatal("expect to release the buffer successfully, but not")
+	}
 
 	buf8 := Get(8)
 	copy(buf8, "12345678")
@@ -202,9 +221,6 @@ func TestCapacityPools_Default(t *testing.T) {
 	}
 
 	buf8 = append(buf8, '9')
-
-	// Disable GC to test re-acquire the same data
-	gc := debug.SetGCPercent(-1)
 
 	Put(buf8)
 
