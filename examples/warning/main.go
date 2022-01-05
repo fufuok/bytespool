@@ -8,6 +8,7 @@ import (
 
 func main() {
 	x := bytespool.New(8)
+	copy(x, "........")
 	y := x[4:]
 
 	// Wrong release!
@@ -26,7 +27,7 @@ func main() {
 	// The output is similar to:
 	// 0xc0000044c0, 0xc000004500, 0xc000004520
 	// 0xc00000a1a0, 0xc00000a1a4, 0xc00000a1a4
-	//      x
-	//  x
-	//  x
+	// ......x.
+	// ..x.
+	// ..x.
 }

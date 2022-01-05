@@ -13,7 +13,7 @@ func main() {
 	data := []byte("test")
 	n := copy(bs, data)
 	// n: 4, bs: test
-	fmt.Printf("n: %d, bs: %s", n, bs[:n])
+	fmt.Printf("n: %d, bs: %s\n", n, bs[:n])
 
 	bufPool.Put(bs)
 }
