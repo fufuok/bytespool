@@ -12,7 +12,7 @@ import (
 const (
 	minCapacity    = 2
 	defaultMinSize = 2
-	defaultMaxSize = 8192
+	defaultMaxSize = 8 << 20 // 8 MiB
 )
 
 var defaultCapacityPools = NewCapacityPools(defaultMinSize, defaultMaxSize)
