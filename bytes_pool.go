@@ -79,9 +79,8 @@ func newBytesPool(size int) *bytesPool {
 	}
 }
 
-// Make return an empty bytes pointer variable.
-// Length is 0, default capacity is maxSize.
-func (p *CapacityPools) Make(capacity int) []byte {
+// Make return a byte slice of length 0.
+func (p *CapacityPools) Make(capacity int) (buf []byte) {
 	return p.New(capacity)[:0]
 }
 
@@ -97,19 +96,19 @@ func (p *CapacityPools) MakeMin() []byte {
 	return p.New(p.minSize)[:0]
 }
 
-// New return bytes of the specified size.
+// New return byte slice of the specified size.
 // Length is size, may contain old data.
 func (p *CapacityPools) New(size int) (buf []byte) {
 	if size < 0 {
 		size = 0
 	}
 	if size > p.maxSize {
-		return make([]byte, size)
+		return make([]byte, size, size)
 	}
 
 	bp := p.getPool(size)
 	if bp == nil {
-		return make([]byte, size)
+		return make([]byte, size, size)
 	}
 
 	ptr, _ := bp.pool.Get().(unsafe.Pointer)
@@ -131,6 +130,16 @@ func (p *CapacityPools) Get(size int) []byte {
 
 func (p *CapacityPools) New64(size uint64) []byte {
 	return p.New(int(size))
+}
+
+func (p *CapacityPools) NewBytes(bs []byte) []byte {
+	buf := p.Make(len(bs))
+	return append(buf, bs...)
+}
+
+func (p *CapacityPools) NewString(s string) []byte {
+	buf := p.Make(len(s))
+	return append(buf, s...)
 }
 
 func (p *CapacityPools) NewMax() []byte {
@@ -204,6 +213,14 @@ func Get(size int) []byte {
 
 func New64(size uint64) []byte {
 	return defaultCapacityPools.New64(size)
+}
+
+func NewBytes(bs []byte) []byte {
+	return defaultCapacityPools.NewBytes(bs)
+}
+
+func NewString(s string) []byte {
+	return defaultCapacityPools.NewString(s)
 }
 
 func NewMax() []byte {

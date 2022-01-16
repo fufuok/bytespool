@@ -38,8 +38,10 @@ func MakeMax() []byte
 func MakeMin() []byte
 func New(size int) []byte  // len: size, cap: size / capacity scale
 func New64(size uint64) []byte
+func NewBytes(bs []byte) []byte
 func NewMax() []byte
 func NewMin() []byte
+func NewString(s string) []byte
 func Put(buf []byte)  // Put is the same as Release(buf []byte), no return value
 func Release(buf []byte) bool
 type BufPool struct{ ... }
@@ -84,11 +86,18 @@ func main() {
 	fmt.Printf("len: %d, cap: %d, value: %s\n", len(bs), cap(bs), bs)
 	bytespool.Release(bs)
 
+	// len: len("xyz"), capacity: 4
+	bs = bytespool.NewString("xyz")
+	// len: 3, cap: 4, value: xyz
+	fmt.Printf("len: %d, cap: %d, value: %s\n", len(bs), cap(bs), bs)
+	bytespool.Release(bs)
+
 	// Output:
 	// len: 1024, cap: 1024
 	// len: 3, cap: 8
 	// true
 	// len: 8, cap: 8, value: 12345678
+	// len: 3, cap: 4, value: xyz
 }
 ```
 

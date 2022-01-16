@@ -31,9 +31,16 @@ func main() {
 	fmt.Printf("len: %d, cap: %d, value: %s\n", len(bs), cap(bs), bs)
 	bytespool.Release(bs)
 
+	// len: len("xyz"), capacity: 4
+	bs = bytespool.NewString("xyz")
+	// len: 3, cap: 4, value: xyz
+	fmt.Printf("len: %d, cap: %d, value: %s\n", len(bs), cap(bs), bs)
+	bytespool.Release(bs)
+
 	// Output:
 	// len: 1024, cap: 1024
 	// len: 3, cap: 8
 	// true
 	// len: 8, cap: 8, value: 12345678
+	// len: 3, cap: 4, value: xyz
 }
