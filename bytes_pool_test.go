@@ -29,7 +29,7 @@ func TestCapacityPools(t *testing.T) {
 	}
 	for _, v := range tests {
 		t.Run(fmt.Sprintf("bytes.New(%d)", v.size), func(t *testing.T) {
-			bp := pools.getPool(v.size)
+			bp := pools.getMakePool(v.size)
 			if bp == nil {
 				if v.scaleSize > 0 {
 					t.Fatalf("expect pool capacity is %d, but got nil", v.scaleSize)
@@ -192,6 +192,16 @@ func TestCapacityPools_Default(t *testing.T) {
 		t.Fatalf("expect buffer cap is %d, but got %d", defaultMaxSize, cap(buf))
 	}
 
+	len0 := Make(32)
+	if !Release(len0) {
+		t.Fatal("expect to release the buffer successfully, but not")
+	}
+
+	var cap0 []byte
+	if Release(cap0) {
+		t.Fatal("expect to release the buffer failure, but not")
+	}
+
 	abc := []byte("abc")
 	buf = append(buf, abc...)
 
@@ -292,5 +302,20 @@ func TestNewBytesString(t *testing.T) {
 	}
 	if !bytes.Equal(buf, bs) {
 		t.Fatalf("expect buf to be equal to %s, but not", bs)
+	}
+}
+
+func TestUnalignedCapacity(t *testing.T) {
+	bs := make([]byte, 0, 7)
+	bs = append(bs, "123"...)
+	if !Release(bs) {
+		t.Fatal("expect to release the buffer successfully, but not")
+	}
+	buf := Make(3)
+	if cap(buf) != 4 {
+		t.Fatalf("expect buffer cap is 4, but got %d", cap(buf))
+	}
+	if !Release(buf) {
+		t.Fatal("expect to release the buffer successfully, but not")
 	}
 }

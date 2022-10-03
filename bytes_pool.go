@@ -106,7 +106,7 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 		return make([]byte, size, size)
 	}
 
-	bp := p.getPool(size)
+	bp := p.getMakePool(size)
 	if bp == nil {
 		return make([]byte, size, size)
 	}
@@ -151,14 +151,10 @@ func (p *CapacityPools) NewMin() []byte {
 }
 
 // Release put it back into the pool of the corresponding scale.
-// Discard buffer larger than the maximum capacity.
+// Buffers smaller than the minimum capacity or larger than the maximum capacity are discarded.
 func (p *CapacityPools) Release(buf []byte) bool {
-	n := cap(buf)
-	if n == 0 || n > p.maxSize {
-		return false
-	}
-	bp := p.getPool(n)
-	if n != bp.capacity {
+	bp := p.getReleasePool(cap(buf))
+	if bp == nil {
 		return false
 	}
 	// array pointer
@@ -170,7 +166,7 @@ func (p *CapacityPools) Put(buf []byte) {
 	p.Release(buf)
 }
 
-func (p *CapacityPools) getPool(size int) *bytesPool {
+func (p *CapacityPools) getMakePool(size int) *bytesPool {
 	if size <= p.minSize {
 		return p.pools[0]
 	}
@@ -181,6 +177,24 @@ func (p *CapacityPools) getPool(size int) *bytesPool {
 		return nil
 	}
 	return p.pools[getIndex(size)-p.decIndex]
+}
+
+func (p *CapacityPools) getReleasePool(size int) *bytesPool {
+	if size < p.minSize || size > p.maxSize {
+		return nil
+	}
+	if size == p.minSize {
+		return p.pools[0]
+	}
+	if size == p.maxSize {
+		return p.pools[p.maxIndex]
+	}
+	idx := getIndex(size) - p.decIndex
+	pool := p.pools[idx]
+	if size < pool.capacity {
+		pool = p.pools[idx-1]
+	}
+	return pool
 }
 
 func getIndex(n int) int {
