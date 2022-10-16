@@ -80,7 +80,7 @@ func newBytesPool(size int) *bytesPool {
 }
 
 // Make return a byte slice of length 0.
-func (p *CapacityPools) Make(capacity int) (buf []byte) {
+func (p *CapacityPools) Make(capacity int) []byte {
 	return p.New(capacity)[:0]
 }
 
@@ -98,6 +98,7 @@ func (p *CapacityPools) MakeMin() []byte {
 
 // New return byte slice of the specified size.
 // Length is size, may contain old data.
+// Warning: returned buf is never equal to nil
 func (p *CapacityPools) New(size int) (buf []byte) {
 	if size < 0 {
 		size = 0
@@ -148,6 +149,27 @@ func (p *CapacityPools) NewMax() []byte {
 
 func (p *CapacityPools) NewMin() []byte {
 	return p.New(p.minSize)
+}
+
+// Append Similar to the built-in function to append elements to the end of a slice.
+// If there is insufficient capacity,
+// a new underlying array is allocated and the old array is reclaimed.
+func (p *CapacityPools) Append(buf []byte, elems ...byte) []byte {
+	return p.AppendString(buf, *(*string)(unsafe.Pointer(&elems)))
+}
+
+func (p *CapacityPools) AppendString(buf []byte, elems string) []byte {
+	n := len(buf)
+	c := cap(buf)
+	m := n + len(elems)
+	if c < m && c <= p.maxSize {
+		bbuf := p.New(m)
+		copy(bbuf, buf)
+		copy(bbuf[n:], elems)
+		p.Release(buf)
+		return bbuf
+	}
+	return append(buf, elems...)
 }
 
 // Release put it back into the pool of the corresponding scale.
@@ -201,12 +223,12 @@ func getIndex(n int) int {
 	return bits.Len32(uint32(n) - 1)
 }
 
-func Make(size int) []byte {
-	return defaultCapacityPools.Make(size)
+func Make(capacity int) []byte {
+	return defaultCapacityPools.Make(capacity)
 }
 
-func Make64(size uint64) []byte {
-	return defaultCapacityPools.Make64(size)
+func Make64(capacity uint64) []byte {
+	return defaultCapacityPools.Make64(capacity)
 }
 
 func MakeMax() []byte {
@@ -243,6 +265,14 @@ func NewMax() []byte {
 
 func NewMin() []byte {
 	return defaultCapacityPools.NewMin()
+}
+
+func Append(buf []byte, elems ...byte) []byte {
+	return defaultCapacityPools.Append(buf, elems...)
+}
+
+func AppendString(buf []byte, elems string) []byte {
+	return defaultCapacityPools.AppendString(buf, elems)
 }
 
 func Release(buf []byte) bool {

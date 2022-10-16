@@ -18,12 +18,13 @@ func TestCapacityPools(t *testing.T) {
 		bytesLength int
 		releaseOK   bool
 	}{
-		{-1, 64, 0, true},
-		{0, 64, 0, true},
-		{64, 64, 64, true},
+		{-1, minSize, 0, true},
+		{0, minSize, 0, true},
+		{minSize, minSize, minSize, true},
 		{128, 128, 128, true},
 		{2000, 2048, 2000, true},
 		{2047, 2048, 2047, true},
+		{maxSize, maxSize, maxSize, true},
 		{4096, 0, 4096, false},
 		{5000, 0, 5000, false},
 	}
@@ -39,6 +40,9 @@ func TestCapacityPools(t *testing.T) {
 			}
 
 			buf := pools.Make(v.size)
+			if buf == nil {
+				t.Fatal("expect  buf != nil")
+			}
 			if len(buf) != 0 {
 				t.Fatalf("expect buffer len is 0, but got %d", len(buf))
 			}
@@ -80,12 +84,22 @@ func TestCapacityPools_Make64(t *testing.T) {
 }
 
 func TestCapacityPools_Boundary(t *testing.T) {
+	buf := Get(-1)
+	if buf == nil {
+		t.Fatal("expect  buf != nil")
+	}
+	if len(buf) != 0 {
+		t.Fatalf("expect buffer len is 0, but got %d", len(buf))
+	}
+	if cap(buf) != minCapacity {
+		t.Fatalf("expect buffer cap == %d, but got %d", minCapacity, cap(buf))
+	}
 	pools := NewCapacityPools(0, 0)
 	if pools.maxIndex != 0 {
 		t.Fatal("expect have one pool, but not")
 	}
 
-	buf := pools.MakeMax()
+	buf = pools.MakeMax()
 	if len(buf) != 0 {
 		t.Fatalf("expect buffer len is 0, but got %d", len(buf))
 	}
@@ -192,7 +206,7 @@ func TestCapacityPools_Default(t *testing.T) {
 		t.Fatalf("expect buffer cap is %d, but got %d", defaultMaxSize, cap(buf))
 	}
 
-	len0 := Make(32)
+	len0 := make([]byte, 0, 8)
 	if !Release(len0) {
 		t.Fatal("expect to release the buffer successfully, but not")
 	}
@@ -318,4 +332,42 @@ func TestUnalignedCapacity(t *testing.T) {
 	if !Release(buf) {
 		t.Fatal("expect to release the buffer successfully, but not")
 	}
+}
+
+func TestAppend(t *testing.T) {
+	// Disable GC to test re-acquire the same data
+	gc := debug.SetGCPercent(-1)
+	buf := Get(4)
+	if len(buf) != 4 || cap(buf) != 4 {
+		t.Fatalf("expect buf cap is 4, but got %d", cap(buf))
+	}
+
+	copy(buf, "1234")
+	bbuf := Append(buf, '+')
+	if len(bbuf) != 5 || cap(bbuf) != 8 {
+		t.Fatalf("expect bbuf cap is 8, but got %d", cap(bbuf))
+	}
+	// Warning: you should stop using (buf)!
+	if len(buf) != 4 || cap(buf) != 4 {
+		t.Fatalf("expect buf cap is 4, but got %d", cap(buf))
+	}
+
+	if !bytes.EqualFold(bbuf, []byte("1234+")) || !bytes.EqualFold(buf, []byte("1234")) {
+		t.Fatalf("expect bbuf is 1234+, buf is 1234")
+	}
+
+	if &bbuf[0] == &buf[0] {
+		t.Fatal("expect bbuf and buf to not be the same array")
+	}
+
+	cbuf := AppendString(bbuf, "+2")
+	if len(bbuf) != 7 && cap(bbuf) != 8 && len(cbuf) != 7 && cap(cbuf) != 8 {
+		t.Fatalf("expect bbuf and cbuf cap is 8, but got %d", cap(bbuf))
+	}
+
+	if &cbuf[0] != &bbuf[0] {
+		t.Fatal("expect bbuf and buf to be the same array")
+	}
+	// Re-enable GC
+	debug.SetGCPercent(gc)
 }
