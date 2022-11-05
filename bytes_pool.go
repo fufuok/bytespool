@@ -15,7 +15,7 @@ const (
 	defaultMaxSize = 8 << 20 // 8 MiB
 )
 
-var defaultCapacityPools = NewCapacityPools(defaultMinSize, defaultMaxSize)
+var DefaultCapacityPools = NewCapacityPools(defaultMinSize, defaultMaxSize)
 
 type CapacityPools struct {
 	minSize  int
@@ -32,7 +32,7 @@ type bytesPool struct {
 
 // InitDefaultPools initialize to the default pool.
 func InitDefaultPools(minSize, maxSize int) {
-	defaultCapacityPools = NewCapacityPools(minSize, maxSize)
+	DefaultCapacityPools = NewCapacityPools(minSize, maxSize)
 }
 
 // NewCapacityPools divide into multiple pools according to the capacity scale.
@@ -97,7 +97,7 @@ func (p *CapacityPools) MakeMin() []byte {
 }
 
 // New return byte slice of the specified size.
-// Length is size, may contain old data.
+// Warning: may contain old data.
 // Warning: returned buf is never equal to nil
 func (p *CapacityPools) New(size int) (buf []byte) {
 	if size < 0 {
@@ -133,16 +133,6 @@ func (p *CapacityPools) New64(size uint64) []byte {
 	return p.New(int(size))
 }
 
-func (p *CapacityPools) NewBytes(bs []byte) []byte {
-	buf := p.Make(len(bs))
-	return append(buf, bs...)
-}
-
-func (p *CapacityPools) NewString(s string) []byte {
-	buf := p.Make(len(s))
-	return append(buf, s...)
-}
-
 func (p *CapacityPools) NewMax() []byte {
 	return p.New(p.maxSize)
 }
@@ -151,7 +141,19 @@ func (p *CapacityPools) NewMin() []byte {
 	return p.New(p.minSize)
 }
 
-// Append Similar to the built-in function to append elements to the end of a slice.
+// NewBytes returns a byte slice of the specified content.
+func (p *CapacityPools) NewBytes(bs []byte) []byte {
+	buf := p.Make(len(bs))
+	return append(buf, bs...)
+}
+
+// NewString returns a byte slice of the specified content.
+func (p *CapacityPools) NewString(s string) []byte {
+	buf := p.Make(len(s))
+	return append(buf, s...)
+}
+
+// Append similar to the built-in function to append elements to the end of a slice.
 // If there is insufficient capacity,
 // a new underlying array is allocated and the old array is reclaimed.
 func (p *CapacityPools) Append(buf []byte, elems ...byte) []byte {
@@ -172,7 +174,7 @@ func (p *CapacityPools) AppendString(buf []byte, elems string) []byte {
 	return append(buf, elems...)
 }
 
-// Release put it back into the pool of the corresponding scale.
+// Release put it back into the byte pool of the corresponding scale.
 // Buffers smaller than the minimum capacity or larger than the maximum capacity are discarded.
 func (p *CapacityPools) Release(buf []byte) bool {
 	bp := p.getReleasePool(cap(buf))
@@ -186,6 +188,14 @@ func (p *CapacityPools) Release(buf []byte) bool {
 
 func (p *CapacityPools) Put(buf []byte) {
 	p.Release(buf)
+}
+
+func (p *CapacityPools) MinSize() int {
+	return p.minSize
+}
+
+func (p *CapacityPools) MaxSize() int {
+	return p.maxSize
 }
 
 func (p *CapacityPools) getMakePool(size int) *bytesPool {
@@ -224,61 +234,69 @@ func getIndex(n int) int {
 }
 
 func Make(capacity int) []byte {
-	return defaultCapacityPools.Make(capacity)
+	return DefaultCapacityPools.Make(capacity)
 }
 
 func Make64(capacity uint64) []byte {
-	return defaultCapacityPools.Make64(capacity)
+	return DefaultCapacityPools.Make64(capacity)
 }
 
 func MakeMax() []byte {
-	return defaultCapacityPools.MakeMax()
+	return DefaultCapacityPools.MakeMax()
 }
 
 func MakeMin() []byte {
-	return defaultCapacityPools.MakeMin()
+	return DefaultCapacityPools.MakeMin()
 }
 
 func New(size int) []byte {
-	return defaultCapacityPools.New(size)
+	return DefaultCapacityPools.New(size)
 }
 
 func Get(size int) []byte {
-	return defaultCapacityPools.Get(size)
+	return DefaultCapacityPools.Get(size)
 }
 
 func New64(size uint64) []byte {
-	return defaultCapacityPools.New64(size)
-}
-
-func NewBytes(bs []byte) []byte {
-	return defaultCapacityPools.NewBytes(bs)
-}
-
-func NewString(s string) []byte {
-	return defaultCapacityPools.NewString(s)
+	return DefaultCapacityPools.New64(size)
 }
 
 func NewMax() []byte {
-	return defaultCapacityPools.NewMax()
+	return DefaultCapacityPools.NewMax()
 }
 
 func NewMin() []byte {
-	return defaultCapacityPools.NewMin()
+	return DefaultCapacityPools.NewMin()
+}
+
+func NewBytes(bs []byte) []byte {
+	return DefaultCapacityPools.NewBytes(bs)
+}
+
+func NewString(s string) []byte {
+	return DefaultCapacityPools.NewString(s)
 }
 
 func Append(buf []byte, elems ...byte) []byte {
-	return defaultCapacityPools.Append(buf, elems...)
+	return DefaultCapacityPools.Append(buf, elems...)
 }
 
 func AppendString(buf []byte, elems string) []byte {
-	return defaultCapacityPools.AppendString(buf, elems)
+	return DefaultCapacityPools.AppendString(buf, elems)
 }
 
 func Release(buf []byte) bool {
-	return defaultCapacityPools.Release(buf)
+	return DefaultCapacityPools.Release(buf)
 }
 
 func Put(buf []byte) {
-	defaultCapacityPools.Put(buf)
+	DefaultCapacityPools.Put(buf)
+}
+
+func MinSize() int {
+	return DefaultCapacityPools.MinSize()
+}
+
+func MaxSize() int {
+	return DefaultCapacityPools.MaxSize()
 }

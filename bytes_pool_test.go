@@ -182,9 +182,9 @@ func TestCapacityPools_Boundary(t *testing.T) {
 }
 
 func TestCapacityPools_Default(t *testing.T) {
-	if defaultCapacityPools.maxIndex+1 != getIndex(defaultMaxSize) {
+	if DefaultCapacityPools.maxIndex+1 != getIndex(defaultMaxSize) {
 		t.Fatalf("expect count default pools is %d, but got %d",
-			getIndex(defaultMaxSize), defaultCapacityPools.maxIndex+1)
+			getIndex(defaultMaxSize), DefaultCapacityPools.maxIndex+1)
 	}
 
 	buf := Make(defaultMaxSize + 1)
@@ -262,8 +262,12 @@ func TestCapacityPools_Default(t *testing.T) {
 	minSize := 2
 	maxSize := 8
 	InitDefaultPools(minSize, maxSize)
-	if defaultCapacityPools.maxIndex+1 != 3 {
+	if DefaultCapacityPools.maxIndex+1 != 3 {
 		t.Fatal("expect count default pools is 3, but not")
+	}
+
+	if MinSize() != minSize || MaxSize() != maxSize {
+		t.Fatalf("expect MinSize = %d, MaxSize = %d, but got %d, %d", minSize, maxSize, MinSize(), MaxSize())
 	}
 
 	buf = MakeMin()
