@@ -79,6 +79,11 @@ func newBytesPool(size int) *bytesPool {
 	}
 }
 
+// Clone return a copy of the byte slice
+func (p *CapacityPools) Clone(buf []byte) []byte {
+	return p.NewBytes(buf)
+}
+
 // Make return a byte slice of length 0.
 func (p *CapacityPools) Make(capacity int) []byte {
 	return p.New(capacity)[:0]
@@ -231,6 +236,10 @@ func (p *CapacityPools) getReleasePool(size int) *bytesPool {
 
 func getIndex(n int) int {
 	return bits.Len32(uint32(n) - 1)
+}
+
+func Clone(buf []byte) []byte {
+	return DefaultCapacityPools.Clone(buf)
 }
 
 func Make(capacity int) []byte {

@@ -375,3 +375,15 @@ func TestAppend(t *testing.T) {
 	// Re-enable GC
 	debug.SetGCPercent(gc)
 }
+
+func TestClone(t *testing.T) {
+	buf := NewString("123")
+	buf2 := Clone(buf)
+	buf[0] = 'x'
+	if string(buf2) != "123" {
+		t.Fatalf("expect buf is 123, but got %s", string(buf2))
+	}
+	if string(buf) != "x23" {
+		t.Fatalf("expect buf is x23, but got %s", string(buf))
+	}
+}
