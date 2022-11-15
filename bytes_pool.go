@@ -162,7 +162,17 @@ func (p *CapacityPools) NewString(s string) []byte {
 // If there is insufficient capacity,
 // a new underlying array is allocated and the old array is reclaimed.
 func (p *CapacityPools) Append(buf []byte, elems ...byte) []byte {
-	return p.AppendString(buf, *(*string)(unsafe.Pointer(&elems)))
+	n := len(buf)
+	c := cap(buf)
+	m := n + len(elems)
+	if c < m && c <= p.maxSize {
+		bbuf := p.New(m)
+		copy(bbuf, buf)
+		copy(bbuf[n:], elems)
+		p.Release(buf)
+		return bbuf
+	}
+	return append(buf, elems...)
 }
 
 func (p *CapacityPools) AppendString(buf []byte, elems string) []byte {
