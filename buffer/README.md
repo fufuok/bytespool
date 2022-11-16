@@ -21,13 +21,17 @@ import "github.com/fufuok/bytespool/buffer"
   - [func Make64(capacity uint64) *Buffer](<#func-make64>)
   - [func MakeMax() *Buffer](<#func-makemax>)
   - [func MakeMin() *Buffer](<#func-makemin>)
+  - [func New(size int) *Buffer](<#func-new>)
+  - [func NewBuffer(buf []byte) *Buffer](<#func-newbuffer>)
   - [func NewBytes(bs []byte) *Buffer](<#func-newbytes>)
   - [func NewString(s string) *Buffer](<#func-newstring>)
   - [func (bb *Buffer) Bytes() []byte](<#func-buffer-bytes>)
   - [func (bb *Buffer) Cap() int](<#func-buffer-cap>)
   - [func (bb *Buffer) Clone() *Buffer](<#func-buffer-clone>)
   - [func (bb *Buffer) Close() error](<#func-buffer-close>)
+  - [func (bb *Buffer) Copy() []byte](<#func-buffer-copy>)
   - [func (bb *Buffer) Grow(n int)](<#func-buffer-grow>)
+  - [func (bb *Buffer) Guarantee(n int)](<#func-buffer-guarantee>)
   - [func (bb *Buffer) Len() int](<#func-buffer-len>)
   - [func (bb *Buffer) Put()](<#func-buffer-put>)
   - [func (bb *Buffer) Read(p []byte) (n int, err error)](<#func-buffer-read>)
@@ -87,7 +91,7 @@ func MinSize() int
 func Put(bb *Buffer)
 ```
 
-Put is the same as b\.Release\.
+Put is the same as b.Release.
 
 ## func Release
 
@@ -95,7 +99,7 @@ Put is the same as b\.Release\.
 func Release(bb *Buffer) (ok bool)
 ```
 
-Release put B back into the byte pool of the corresponding scale\, and put the Buffer back into the buffer pool\. Buffers smaller than the minimum capacity or larger than the maximum capacity are discarded\.
+Release put B back into the byte pool of the corresponding scale, and put the Buffer back into the buffer pool. Buffers smaller than the minimum capacity or larger than the maximum capacity are discarded.
 
 ## func SetCapacity
 
@@ -103,11 +107,11 @@ Release put B back into the byte pool of the corresponding scale\, and put the B
 func SetCapacity(minSize, maxSize int)
 ```
 
-SetCapacity initialize to the default byte slice pool\. Divide into multiple pools according to the capacity scale\. Maximum range of byte slice pool: \[2\,1\<\<31\]
+SetCapacity initialize to the default byte slice pool. Divide into multiple pools according to the capacity scale. Maximum range of byte slice pool: \[2,1\<\<31\]
 
 ## type Buffer
 
-Buffer similar to bytes\.Buffer\, but provides finer\-grained multiplexing of underlying byte slices\. The zero value for Buffer is an empty buffer ready to use\, but capacity will be 0\. It is recommended to use pool to initialize a Buffer: e\.g\.:: bb := buffer\.Get\(\)    // The initial capacity is 64 \(DefaultBufferSize\) bb := buffer\.Make\(8\)  // The initial capacity is 8 After use\, put it back in the pool: bb\.Put\(\) bb\.Release\(\)
+Buffer similar to bytes.Buffer, but provides finer\-grained multiplexing of underlying byte slices. The zero value for Buffer is an empty buffer ready to use, but capacity will be 0. It is recommended to use pool to initialize a Buffer: e.g.:: bb := buffer.Get\(\)    // The initial capacity is 64 \(DefaultBufferSize\) bb := buffer.Make\(8\)  // The initial capacity is 8 After use, put it back in the pool: bb.Put\(\) bb.Release\(\)
 
 ```go
 type Buffer struct {
@@ -124,6 +128,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/fufuok/bytespool/buffer"
 )
 
@@ -159,7 +164,7 @@ result="122333"
 func Clone(bb *Buffer) *Buffer
 ```
 
-Clone returns a copy of the Buffer\.B\. Atomically reset the reference count to 0\.
+Clone returns a copy of the Buffer.B. Atomically reset the reference count to 0.
 
 ### func Get
 
@@ -173,7 +178,7 @@ func Get(capacity ...int) *Buffer
 func Make(capacity int) *Buffer
 ```
 
-Make return a Buffer with a byte slice of length 0\. Capacity will not be 0\, max\(capacity\, defaultPools\.bs\.MinSize\(\)\)
+Make return a Buffer with a byte slice of length 0. Capacity will not be 0, max\(capacity, defaultPools.bs.MinSize\(\)\)
 
 ### func Make64
 
@@ -193,13 +198,29 @@ func MakeMax() *Buffer
 func MakeMin() *Buffer
 ```
 
+### func New
+
+```go
+func New(size int) *Buffer
+```
+
+New return byte slice of the specified size. Warning: may contain old data. Warning: returned buf is never equal to nil
+
+### func NewBuffer
+
+```go
+func NewBuffer(buf []byte) *Buffer
+```
+
+NewBuffer similar to bytes.NewBuffer\(buf \[\]byte\) Creates and initializes a new Buffer using buf as its initial contents. The new Buffer takes ownership of buf, and the caller should not use buf after this call. NewBuffer is intended to prepare a Buffer to read existing data. It can also be used to set the initial size of the internal buffer for writing.
+
 ### func NewBytes
 
 ```go
 func NewBytes(bs []byte) *Buffer
 ```
 
-NewBytes returns a byte slice of the specified content\.
+NewBytes returns a byte slice of the specified content.
 
 ### func NewString
 
@@ -207,7 +228,7 @@ NewBytes returns a byte slice of the specified content\.
 func NewString(s string) *Buffer
 ```
 
-NewString returns a byte slice of the specified content\.
+NewString returns a byte slice of the specified content.
 
 ### func \(\*Buffer\) Bytes
 
@@ -227,7 +248,7 @@ func (bb *Buffer) Cap() int
 func (bb *Buffer) Clone() *Buffer
 ```
 
-Clone returns a copy of the Buffer\.B\. Atomically reset the reference count to 0\.
+Clone returns a copy of the Buffer.B. Atomically reset the reference count to 0.
 
 ### func \(\*Buffer\) Close
 
@@ -235,7 +256,13 @@ Clone returns a copy of the Buffer\.B\. Atomically reset the reference count to 
 func (bb *Buffer) Close() error
 ```
 
-Close implements io\.Closer\.
+Close implements io.Closer.
+
+### func \(\*Buffer\) Copy
+
+```go
+func (bb *Buffer) Copy() []byte
+```
 
 ### func \(\*Buffer\) Grow
 
@@ -243,7 +270,15 @@ Close implements io\.Closer\.
 func (bb *Buffer) Grow(n int)
 ```
 
-Grow grows the internal buffer such that \`n\` bytes can be written without reallocating\. If n is negative\, Grow will panic\. If the buffer can't grow it will panic with ErrTooLarge\.
+Grow grows the internal buffer such that 'n' bytes can be written without reallocating. If n is negative, Grow will panic. If the buffer can't grow it will panic with ErrTooLarge.
+
+### func \(\*Buffer\) Guarantee
+
+```go
+func (bb *Buffer) Guarantee(n int)
+```
+
+Guarantee buffer will be guaranteed to have at least 'n' remaining capacity. If n is negative, Grow will panic. If the buffer can't grow it will panic with ErrTooLarge.
 
 ### func \(\*Buffer\) Len
 
@@ -257,7 +292,7 @@ func (bb *Buffer) Len() int
 func (bb *Buffer) Put()
 ```
 
-Put is the same as b\.Release\.
+Put is the same as b.Release.
 
 ### func \(\*Buffer\) Read
 
@@ -265,9 +300,9 @@ Put is the same as b\.Release\.
 func (bb *Buffer) Read(p []byte) (n int, err error)
 ```
 
-Read implements io\.Reader\.
+Read implements io.Reader.
 
-The function copies data from Buffer\.B to p\. The return value n is the number of bytes read\, error is always nil\.
+The function copies data from Buffer.B to p. The return value n is the number of bytes read, error is always nil\!\!\!
 
 ### func \(\*Buffer\) ReadFrom
 
@@ -275,9 +310,9 @@ The function copies data from Buffer\.B to p\. The return value n is the number 
 func (bb *Buffer) ReadFrom(r io.Reader) (int64, error)
 ```
 
-ReadFrom implements io\.ReaderFrom\.
+ReadFrom implements io.ReaderFrom.
 
-The function appends all the data read from r to Buffer\.B\.
+The function appends all the data read from r to Buffer.B.
 
 ### func \(\*Buffer\) RefAdd
 
@@ -291,7 +326,7 @@ func (bb *Buffer) RefAdd(delta int64)
 func (bb *Buffer) RefDec()
 ```
 
-RefDec atomically decrement the reference count by 1\.
+RefDec atomically decrement the reference count by 1.
 
 ### func \(\*Buffer\) RefInc
 
@@ -299,7 +334,7 @@ RefDec atomically decrement the reference count by 1\.
 func (bb *Buffer) RefInc()
 ```
 
-RefInc atomically increment the reference count by 1\.
+RefInc atomically increment the reference count by 1.
 
 ### func \(\*Buffer\) RefReset
 
@@ -307,7 +342,7 @@ RefInc atomically increment the reference count by 1\.
 func (bb *Buffer) RefReset()
 ```
 
-RefReset atomically reset the reference count to 0\.
+RefReset atomically reset the reference count to 0.
 
 ### func \(\*Buffer\) RefStore
 
@@ -315,7 +350,7 @@ RefReset atomically reset the reference count to 0\.
 func (bb *Buffer) RefStore(val int64)
 ```
 
-RefStore atomically stores val into the reference count\.
+RefStore atomically stores val into the reference count.
 
 ### func \(\*Buffer\) RefSwapDec
 
@@ -323,7 +358,7 @@ RefStore atomically stores val into the reference count\.
 func (bb *Buffer) RefSwapDec() (c int64)
 ```
 
-RefSwapDec atomically decrement the reference count by 1 and return the old value\.
+RefSwapDec atomically decrement the reference count by 1 and return the old value.
 
 ### func \(\*Buffer\) RefValue
 
@@ -331,7 +366,7 @@ RefSwapDec atomically decrement the reference count by 1 and return the old valu
 func (bb *Buffer) RefValue() int64
 ```
 
-RefValue atomically loads the reference count\.
+RefValue atomically loads the reference count.
 
 ### func \(\*Buffer\) Release
 
@@ -339,7 +374,7 @@ RefValue atomically loads the reference count\.
 func (bb *Buffer) Release() bool
 ```
 
-Release put B back into the byte pool of the corresponding scale\, and put the Buffer back into the buffer pool\. Buffers smaller than the minimum capacity or larger than the maximum capacity are discarded\.
+Release put B back into the byte pool of the corresponding scale, and put the Buffer back into the buffer pool. Buffers smaller than the minimum capacity or larger than the maximum capacity are discarded.
 
 ### func \(\*Buffer\) Reset
 
@@ -347,7 +382,7 @@ Release put B back into the byte pool of the corresponding scale\, and put the B
 func (bb *Buffer) Reset()
 ```
 
-Reset is the same as Truncate\(0\)\.
+Reset is the same as Truncate\(0\).
 
 ### func \(\*Buffer\) Set
 
@@ -355,7 +390,7 @@ Reset is the same as Truncate\(0\)\.
 func (bb *Buffer) Set(p []byte)
 ```
 
-Set sets Buffer\.B to p\.
+Set sets Buffer.B to p.
 
 ### func \(\*Buffer\) SetString
 
@@ -363,7 +398,7 @@ Set sets Buffer\.B to p\.
 func (bb *Buffer) SetString(s string)
 ```
 
-SetString sets Buffer\.B to s\.
+SetString sets Buffer.B to s.
 
 ### func \(\*Buffer\) String
 
@@ -371,9 +406,9 @@ SetString sets Buffer\.B to s\.
 func (bb *Buffer) String() string
 ```
 
-String implements print\.Stringer\.
+String implements print.Stringer.
 
-if the Buffer is a nil pointer\, it returns "" instead of "\<nil\>"
+if the Buffer is a nil pointer, it returns "" instead of "\<nil\>"
 
 ### func \(\*Buffer\) Truncate
 
@@ -381,7 +416,7 @@ if the Buffer is a nil pointer\, it returns "" instead of "\<nil\>"
 func (bb *Buffer) Truncate(n int)
 ```
 
-Truncate buffer data\, keep data of specified length\. It panics if n is negative or greater than the length of the buffer\.
+Truncate buffer data, keep data of specified length. It panics if n is negative or greater than the length of the buffer.
 
 ### func \(\*Buffer\) Write
 
@@ -389,9 +424,9 @@ Truncate buffer data\, keep data of specified length\. It panics if n is negativ
 func (bb *Buffer) Write(p []byte) (int, error)
 ```
 
-Write implements io\.Writer\.
+Write implements io.Writer.
 
-The function appends all the data in p to Buffer\.B\. The returned error is always nil\.
+The function appends all the data in p to Buffer.B. The returned error is always nil.
 
 ### func \(\*Buffer\) WriteByte
 
@@ -399,9 +434,9 @@ The function appends all the data in p to Buffer\.B\. The returned error is alwa
 func (bb *Buffer) WriteByte(c byte) error
 ```
 
-WriteByte implements io\.ByteWriter\.
+WriteByte implements io.ByteWriter.
 
-The function appends the byte c to Buffer\.B\. The returned error is always nil\.
+The function appends the byte c to Buffer.B. The returned error is always nil.
 
 ### func \(\*Buffer\) WriteString
 
@@ -409,9 +444,9 @@ The function appends the byte c to Buffer\.B\. The returned error is always nil\
 func (bb *Buffer) WriteString(s string) (int, error)
 ```
 
-WriteString implements io\.StringWriter\.
+WriteString implements io.StringWriter.
 
-The function appends the s to Buffer\.B\. The returned error is always nil\.
+The function appends the s to Buffer.B. The returned error is always nil.
 
 ### func \(\*Buffer\) WriteTo
 
@@ -419,7 +454,7 @@ The function appends the s to Buffer\.B\. The returned error is always nil\.
 func (bb *Buffer) WriteTo(w io.Writer) (int64, error)
 ```
 
-WriteTo implements io\.WriterTo\.
+WriteTo implements io.WriterTo.
 
 
 

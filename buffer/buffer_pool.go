@@ -38,17 +38,9 @@ func Clone(bb *Buffer) *Buffer {
 // Make return a Buffer with a byte slice of length 0.
 // Capacity will not be 0, max(capacity, defaultPools.bs.MinSize())
 func Make(capacity int) *Buffer {
-	v := defaultPools.buf.Get()
-	if v != nil {
-		buf := v.(*Buffer)
-		buf.B = defaultPools.bs.Make(capacity)
-		buf.RefReset()
-		return buf
-	}
-	return &Buffer{
-		B: defaultPools.bs.Make(capacity),
-		c: 0,
-	}
+	bb := New(capacity)
+	bb.Reset()
+	return bb
 }
 
 func Make64(capacity uint64) *Buffer {
@@ -71,18 +63,45 @@ func Get(capacity ...int) *Buffer {
 	return Make(n)
 }
 
+// New return byte slice of the specified size.
+// Warning: may contain old data.
+// Warning: returned buf is never equal to nil
+func New(size int) *Buffer {
+	v := defaultPools.buf.Get()
+	if v != nil {
+		buf := v.(*Buffer)
+		buf.B = defaultPools.bs.New(size)
+		buf.RefReset()
+		return buf
+	}
+	return &Buffer{
+		B: defaultPools.bs.New(size),
+		c: 0,
+	}
+}
+
+// NewBuffer similar to bytes.NewBuffer(buf []byte)
+// Creates and initializes a new Buffer using buf as its
+// initial contents. The new Buffer takes ownership of buf, and the
+// caller should not use buf after this call. NewBuffer is intended to
+// prepare a Buffer to read existing data. It can also be used to set
+// the initial size of the internal buffer for writing.
+func NewBuffer(buf []byte) *Buffer {
+	return &Buffer{B: buf}
+}
+
 // NewBytes returns a byte slice of the specified content.
 func NewBytes(bs []byte) *Buffer {
-	buf := Make(len(bs))
-	buf.Set(bs)
-	return buf
+	bb := Make(len(bs))
+	bb.Set(bs)
+	return bb
 }
 
 // NewString returns a byte slice of the specified content.
 func NewString(s string) *Buffer {
-	buf := Make(len(s))
-	buf.SetString(s)
-	return buf
+	bb := Make(len(s))
+	bb.SetString(s)
+	return bb
 }
 
 // Similar to the built-in function to append elements to the end of a slice.

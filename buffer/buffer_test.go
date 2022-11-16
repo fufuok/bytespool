@@ -82,7 +82,18 @@ func TestBuffer_Base(t *testing.T) {
 	if bb.String() != "ff" {
 		t.Fatalf("unexpected result: %s", bb.String())
 	}
+	bb.Guarantee(4)
+	if bb.Len() != 2 {
+		t.Fatalf("except len=%d, got: %d", 2, bb.Len())
+	}
 	bb.Grow(4)
+	if bb.Len() != 6 || bb.String() != "ffFufu" {
+		t.Fatalf("unexpected result: %s", bb.String())
+	}
+	bb.Guarantee(400)
+	if bb.Cap() < 402 {
+		t.Fatalf("except cap=%d, got: %d", 402, bb.Cap())
+	}
 	if bb.Len() != 6 || bb.String() != "ffFufu" {
 		t.Fatalf("unexpected result: %s", bb.String())
 	}
@@ -102,9 +113,18 @@ func TestBuffer_RefAndRelease(t *testing.T) {
 		t.Fatalf("except reference counting=%d, got: %d", 3, c)
 	}
 	newBB := bb.Clone()
+	newBS := bb.Copy()
 	c = newBB.RefValue()
 	if c != 0 {
 		t.Fatalf("except reference counting=%d, got: %d", 3, c)
+	}
+
+	bb.Grow(2)
+	if newBB.Len() == bb.Len() {
+		t.Fatalf("except len=%d, got: %d", newBB.Len(), bb.Len())
+	}
+	if !bytes.Equal(newBB.Bytes(), newBS) {
+		t.Fatalf("unexpected result: %s", newBS)
 	}
 
 	bb.RefStore(4)
@@ -140,8 +160,7 @@ func TestBuffer_RefAndRelease(t *testing.T) {
 }
 
 func TestBuffer_Read(t *testing.T) {
-	bb := Get()
-	bb.Grow(10)
+	bb := New(10)
 	copy(bb.B, testBytes)
 	if !bytes.Equal(bb.B, testBytes[:10]) {
 		t.Fatalf("unexpected result: %s", bb.String())

@@ -46,6 +46,10 @@ func (bb *Buffer) Bytes() []byte {
 	return bb.B
 }
 
+func (bb *Buffer) Copy() []byte {
+	return append([]byte{}, bb.B...)
+}
+
 // String implements print.Stringer.
 //
 // if the Buffer is a nil pointer, it returns "" instead of "<nil>"
@@ -59,6 +63,36 @@ func (bb *Buffer) Len() int {
 
 func (bb *Buffer) Cap() int {
 	return cap(bb.B)
+}
+
+// Grow grows the internal buffer such that 'n' bytes can be written without reallocating.
+// If n is negative, Grow will panic.
+// If the buffer can't grow it will panic with ErrTooLarge.
+func (bb *Buffer) Grow(n int) {
+	bb.Guarantee(n)
+	bb.B = bb.B[:len(bb.B)+n]
+}
+
+// Guarantee buffer will be guaranteed to have at least 'n' remaining capacity.
+// If n is negative, Grow will panic.
+// If the buffer can't grow it will panic with ErrTooLarge.
+func (bb *Buffer) Guarantee(n int) {
+	if n < 0 {
+		panic(ErrGrow)
+	}
+	bLen := bb.Len()
+	bCap := bb.Cap()
+	bSize := bLen + n
+	if bCap >= bSize {
+		return
+	}
+	if bSize > math.MaxInt32 {
+		panic(ErrTooLarge)
+	}
+	buf := defaultPools.bs.Make(bSize)
+	buf = append(buf, bb.B...)
+	defaultPools.bs.Release(bb.B)
+	bb.B = buf
 }
 
 // Truncate buffer data, keep data of specified length.
@@ -112,33 +146,10 @@ func (bb *Buffer) SetString(s string) {
 	bb.B = appendString(bb.B[:0], s)
 }
 
-// Grow grows the internal buffer such that `n` bytes can be written without reallocating.
-// If n is negative, Grow will panic.
-// If the buffer can't grow it will panic with ErrTooLarge.
-func (bb *Buffer) Grow(n int) {
-	if n < 0 {
-		panic(ErrGrow)
-	}
-	bLen := bb.Len()
-	bCap := bb.Cap()
-	bSize := bLen + n
-	if bCap >= bSize {
-		bb.B = bb.B[:bSize]
-		return
-	}
-	if bSize > math.MaxInt32 {
-		panic(ErrTooLarge)
-	}
-	buf := defaultPools.bs.New(bSize)
-	copy(buf, bb.B)
-	defaultPools.bs.Release(bb.B)
-	bb.B = buf
-}
-
 // Read implements io.Reader.
 //
 // The function copies data from Buffer.B to p.
-// The return value n is the number of bytes read, error is always nil.
+// The return value n is the number of bytes read, error is always nil!!!
 func (bb *Buffer) Read(p []byte) (n int, err error) {
 	n = copy(p, bb.B)
 	return

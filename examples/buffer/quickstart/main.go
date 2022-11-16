@@ -15,11 +15,22 @@ func main() {
 	_ = bb.WriteByte('x')
 	bb.Truncate(6)
 
-	fmt.Printf("result=%q", bb.String())
+	fmt.Println("bb:", bb.String())
+
+	bs := bb.Copy()
+	bb.SetString("ff")
+	fmt.Println("bs:", string(bs))
+	fmt.Println("bb:", bb.String())
 
 	// After use, put Buffer back in the pool.
 	buffer.Put(bb)
+	// or
+	bb.Put()
+	// or (safe)
+	bb.Release()
 
 	// Output:
-	// result="122333"
+	// bb: 122333
+	// bs: 122333
+	// bb: ff
 }
