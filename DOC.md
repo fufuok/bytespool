@@ -90,7 +90,7 @@ func Get(size int) []byte
 func InitDefaultPools(minSize, maxSize int)
 ```
 
-InitDefaultPools initialize to the default pool\.
+InitDefaultPools initialize to the default pool.
 
 ## func Make
 
@@ -142,6 +142,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/fufuok/bytespool"
 )
 
@@ -235,7 +236,7 @@ func Release(buf []byte) bool
 
 ## type BufPool
 
-BufPool implements the httputil\.BufferPool interface\.
+BufPool implements the httputil.BufferPool interface.
 
 ```go
 type BufPool struct {
@@ -275,7 +276,7 @@ type CapacityPools struct {
 func NewCapacityPools(minSize, maxSize int) *CapacityPools
 ```
 
-NewCapacityPools divide into multiple pools according to the capacity scale\. Maximum range of byte slice pool: \[minCapacity\,1\<\<31\]
+NewCapacityPools divide into multiple pools according to the capacity scale. Maximum range of byte slice pool: \[minCapacity,1\<\<31\]
 
 ### func \(\*CapacityPools\) Append
 
@@ -283,7 +284,7 @@ NewCapacityPools divide into multiple pools according to the capacity scale\. Ma
 func (p *CapacityPools) Append(buf []byte, elems ...byte) []byte
 ```
 
-Append similar to the built\-in function to append elements to the end of a slice\. If there is insufficient capacity\, a new underlying array is allocated and the old array is reclaimed\.
+Append similar to the built\-in function to append elements to the end of a slice. If there is insufficient capacity, a new underlying array is allocated and the old array is reclaimed.
 
 ### func \(\*CapacityPools\) AppendString
 
@@ -311,7 +312,7 @@ func (p *CapacityPools) Get(size int) []byte
 func (p *CapacityPools) Make(capacity int) []byte
 ```
 
-Make return a byte slice of length 0\.
+Make return a byte slice of length 0.
 
 ### func \(\*CapacityPools\) Make64
 
@@ -349,7 +350,7 @@ func (p *CapacityPools) MinSize() int
 func (p *CapacityPools) New(size int) (buf []byte)
 ```
 
-New return byte slice of the specified size\. Warning: may contain old data\. Warning: returned buf is never equal to nil
+New return byte slice of the specified size. Warning: may contain old data. Warning: returned buf is never equal to nil
 
 ### func \(\*CapacityPools\) New64
 
@@ -363,7 +364,7 @@ func (p *CapacityPools) New64(size uint64) []byte
 func (p *CapacityPools) NewBytes(bs []byte) []byte
 ```
 
-NewBytes returns a byte slice of the specified content\.
+NewBytes returns a byte slice of the specified content.
 
 ### func \(\*CapacityPools\) NewMax
 
@@ -383,7 +384,7 @@ func (p *CapacityPools) NewMin() []byte
 func (p *CapacityPools) NewString(s string) []byte
 ```
 
-NewString returns a byte slice of the specified content\.
+NewString returns a byte slice of the specified content.
 
 ### func \(\*CapacityPools\) Put
 
@@ -397,7 +398,7 @@ func (p *CapacityPools) Put(buf []byte)
 func (p *CapacityPools) Release(buf []byte) bool
 ```
 
-Release put it back into the byte pool of the corresponding scale\. Buffers smaller than the minimum capacity or larger than the maximum capacity are discarded\.
+Release put it back into the byte pool of the corresponding scale. Buffers smaller than the minimum capacity or larger than the maximum capacity are discarded.
 
 
 
