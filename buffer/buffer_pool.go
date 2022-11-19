@@ -1,9 +1,11 @@
 package buffer
 
 import (
+	"bytes"
 	"sync"
 
 	"github.com/fufuok/bytespool"
+	"github.com/fufuok/bytespool/readerpool"
 )
 
 var defaultPools = &pools{
@@ -138,4 +140,14 @@ func MinSize() int {
 
 func MaxSize() int {
 	return defaultPools.bs.MaxSize()
+}
+
+// GetReader returns an io.Reader from bs.
+func GetReader(bs []byte) *bytes.Reader {
+	return readerpool.New(bs)
+}
+
+// PutReader put an io.Reader into the pool.
+func PutReader(r *bytes.Reader) {
+	readerpool.Release(r)
 }

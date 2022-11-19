@@ -9,9 +9,11 @@ import "github.com/fufuok/bytespool/buffer"
 ## Index
 
 - [Variables](<#variables>)
+- [func GetReader(bs []byte) *bytes.Reader](<#func-getreader>)
 - [func MaxSize() int](<#func-maxsize>)
 - [func MinSize() int](<#func-minsize>)
 - [func Put(bb *Buffer)](<#func-put>)
+- [func PutReader(r *bytes.Reader)](<#func-putreader>)
 - [func Release(bb *Buffer) (ok bool)](<#func-release>)
 - [func SetCapacity(minSize, maxSize int)](<#func-setcapacity>)
 - [type Buffer](<#type-buffer>)
@@ -30,11 +32,14 @@ import "github.com/fufuok/bytespool/buffer"
   - [func (bb *Buffer) Clone() *Buffer](<#func-buffer-clone>)
   - [func (bb *Buffer) Close() error](<#func-buffer-close>)
   - [func (bb *Buffer) Copy() []byte](<#func-buffer-copy>)
+  - [func (bb *Buffer) CopyTo(p []byte) int](<#func-buffer-copyto>)
+  - [func (bb *Buffer) GetReader() *bytes.Reader](<#func-buffer-getreader>)
   - [func (bb *Buffer) Grow(n int)](<#func-buffer-grow>)
   - [func (bb *Buffer) Guarantee(n int)](<#func-buffer-guarantee>)
   - [func (bb *Buffer) Len() int](<#func-buffer-len>)
   - [func (bb *Buffer) Put()](<#func-buffer-put>)
-  - [func (bb *Buffer) Read(p []byte) (n int, err error)](<#func-buffer-read>)
+  - [func (bb *Buffer) PutAll(r *bytes.Reader)](<#func-buffer-putall>)
+  - [func (bb *Buffer) PutReader(r *bytes.Reader) bool](<#func-buffer-putreader>)
   - [func (bb *Buffer) ReadFrom(r io.Reader) (int64, error)](<#func-buffer-readfrom>)
   - [func (bb *Buffer) RefAdd(delta int64)](<#func-buffer-refadd>)
   - [func (bb *Buffer) RefDec()](<#func-buffer-refdec>)
@@ -49,6 +54,7 @@ import "github.com/fufuok/bytespool/buffer"
   - [func (bb *Buffer) SetString(s string)](<#func-buffer-setstring>)
   - [func (bb *Buffer) String() string](<#func-buffer-string>)
   - [func (bb *Buffer) Truncate(n int)](<#func-buffer-truncate>)
+  - [func (bb *Buffer) UnsafeString() string](<#func-buffer-unsafestring>)
   - [func (bb *Buffer) Write(p []byte) (int, error)](<#func-buffer-write>)
   - [func (bb *Buffer) WriteByte(c byte) error](<#func-buffer-writebyte>)
   - [func (bb *Buffer) WriteString(s string) (int, error)](<#func-buffer-writestring>)
@@ -73,6 +79,14 @@ var (
 )
 ```
 
+## func GetReader
+
+```go
+func GetReader(bs []byte) *bytes.Reader
+```
+
+GetReader returns an io.Reader from bs.
+
 ## func MaxSize
 
 ```go
@@ -92,6 +106,14 @@ func Put(bb *Buffer)
 ```
 
 Put is the same as b.Release.
+
+## func PutReader
+
+```go
+func PutReader(r *bytes.Reader)
+```
+
+PutReader put an io.Reader into the pool.
 
 ## func Release
 
@@ -264,6 +286,24 @@ Close implements io.Closer.
 func (bb *Buffer) Copy() []byte
 ```
 
+Copy return a copy of the Buffer data.
+
+### func \(\*Buffer\) CopyTo
+
+```go
+func (bb *Buffer) CopyTo(p []byte) int
+```
+
+CopyTo same as copy\(p, bb.B\).
+
+### func \(\*Buffer\) GetReader
+
+```go
+func (bb *Buffer) GetReader() *bytes.Reader
+```
+
+GetReader returns an io.Reader with bb.B.
+
 ### func \(\*Buffer\) Grow
 
 ```go
@@ -294,15 +334,21 @@ func (bb *Buffer) Put()
 
 Put is the same as b.Release.
 
-### func \(\*Buffer\) Read
+### func \(\*Buffer\) PutAll
 
 ```go
-func (bb *Buffer) Read(p []byte) (n int, err error)
+func (bb *Buffer) PutAll(r *bytes.Reader)
 ```
 
-Read implements io.Reader.
+PutAll put io.Reader and Buffer into the pool.
 
-The function copies data from Buffer.B to p. The return value n is the number of bytes read, error is always nil\!\!\!
+### func \(\*Buffer\) PutReader
+
+```go
+func (bb *Buffer) PutReader(r *bytes.Reader) bool
+```
+
+PutReader put an io.Reader into the pool.
 
 ### func \(\*Buffer\) ReadFrom
 
@@ -417,6 +463,14 @@ func (bb *Buffer) Truncate(n int)
 ```
 
 Truncate buffer data, keep data of specified length. It panics if n is negative or greater than the length of the buffer.
+
+### func \(\*Buffer\) UnsafeString
+
+```go
+func (bb *Buffer) UnsafeString() string
+```
+
+UnsafeString not immutable.
 
 ### func \(\*Buffer\) Write
 

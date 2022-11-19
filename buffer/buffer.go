@@ -1,10 +1,14 @@
 package buffer
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"math"
 	"sync/atomic"
+	"unsafe"
+
+	"github.com/fufuok/bytespool/readerpool"
 )
 
 var (
@@ -13,9 +17,9 @@ var (
 	ErrGrow       = errors.New("buffer: negative count")
 	ErrClose      = errors.New("buffer: failed to add it to the pool")
 
-	_ io.ReadWriteCloser = (*Buffer)(nil)
-	_ io.ReaderFrom      = (*Buffer)(nil)
-	_ io.WriterTo        = (*Buffer)(nil)
+	_ io.WriteCloser = (*Buffer)(nil)
+	_ io.ReaderFrom  = (*Buffer)(nil)
+	_ io.WriterTo    = (*Buffer)(nil)
 )
 
 // Buffer similar to bytes.Buffer, but provides finer-grained multiplexing of underlying byte slices.
@@ -157,15 +161,6 @@ func (bb *Buffer) SetString(s string) {
 	bb.B = appendString(bb.B[:0], s)
 }
 
-// Read implements io.Reader.
-//
-// The function copies data from Buffer.B to p.
-// The return value n is the number of bytes read, error is always nil!!!
-func (bb *Buffer) Read(p []byte) (n int, err error) {
-	n = copy(p, bb.B)
-	return
-}
-
 // ReadFrom implements io.ReaderFrom.
 //
 // The function appends all the data read from r to Buffer.B.
@@ -264,4 +259,24 @@ func (bb *Buffer) RefSwapDec() (c int64) {
 // RefReset atomically reset the reference count to 0.
 func (bb *Buffer) RefReset() {
 	atomic.StoreInt64(&bb.c, 0)
+}
+
+// GetReader returns an io.Reader with bb.B.
+func (bb *Buffer) GetReader() *bytes.Reader {
+	bb.RefInc()
+	return readerpool.New(bb.B)
+}
+
+// PutReader put an io.Reader into the pool.
+func (bb *Buffer) PutReader(r *bytes.Reader) bool {
+	readerpool.Release(r)
+	return bb.Release()
+}
+
+// PutAll put io.Reader and Buffer into the pool.
+func (bb *Buffer) PutAll(r *bytes.Reader) {
+	readerpool.Release(r)
+	defaultPools.bs.Release(bb.B)
+	bb.B = nil
+	defaultPools.buf.Put(bb)
 }

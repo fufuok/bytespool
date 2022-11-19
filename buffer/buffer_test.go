@@ -3,6 +3,7 @@ package buffer
 import (
 	"bytes"
 	"errors"
+	"io"
 	"testing"
 )
 
@@ -94,7 +95,7 @@ func TestBuffer_Base(t *testing.T) {
 	if bb.Cap() < 402 {
 		t.Fatalf("except cap=%d, got: %d", 402, bb.Cap())
 	}
-	if bb.Len() != 6 || bb.String() != "ffFufu" {
+	if bb.Len() != 6 || bb.UnsafeString() != "ffFufu" {
 		t.Fatalf("unexpected result: %s", bb.String())
 	}
 }
@@ -157,9 +158,27 @@ func TestBuffer_RefAndRelease(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected result: %s", err)
 	}
+
+	bb = Get()
+	rb := bb.GetReader()
+	if bb.Release() {
+		t.Fatal("expect to release the buffer failure, but not")
+	}
+	if !bb.PutReader(rb) {
+		t.Fatal("expect to release the buffer successfully, but not")
+	}
+
+	bb = Get()
+	rb = bb.GetReader()
+	if bb.PutReader(rb) {
+		t.Fatal("expect to release the buffer failure, but not")
+	}
+	if !bb.Release() {
+		t.Fatal("expect to release the buffer successfully, but not")
+	}
 }
 
-func TestBuffer_Read(t *testing.T) {
+func TestBuffer_CopyTo(t *testing.T) {
 	bb := New(10)
 	copy(bb.B, testBytes)
 	if !bytes.Equal(bb.B, testBytes[:10]) {
@@ -167,10 +186,7 @@ func TestBuffer_Read(t *testing.T) {
 	}
 	for i := 0; i <= 10; i++ {
 		bs := make([]byte, i)
-		n, err := bb.Read(bs)
-		if err != nil {
-			t.Fatalf("unexpected error: %s", err)
-		}
+		n := bb.CopyTo(bs)
 		if n != i {
 			t.Fatalf("except len=%d, got: %d", i, n)
 		}
@@ -208,9 +224,53 @@ func TestBuffer_ReadFrom(t *testing.T) {
 	}
 }
 
+func TestBuffer_Reader(t *testing.T) {
+	prefix := "prefix"
+	prefixLen := len(prefix)
+	testBB := NewString(testString)
+	bb := NewString(prefix)
+	for i := 0; i < 10; i++ {
+		rb := testBB.GetReader()
+		_ = (io.Reader)(rb)
+		_ = (io.ByteReader)(rb)
+		n, err := bb.ReadFrom(rb)
+		if int(n) != testStringLen {
+			t.Fatalf("except n=%d, got: %d, i: %d", testStringLen, n, i)
+		}
+		if err != nil {
+			t.Fatalf("unexpected error: %s", err)
+		}
+		bufLen := bb.Len()
+		expectedLen := prefixLen + (i+1)*testStringLen
+		if bufLen != expectedLen {
+			t.Fatalf("except length: %d, got: %d, i: %d", expectedLen, bufLen, i)
+		}
+		for j := 0; j < i; j++ {
+			start := prefixLen + j*testStringLen
+			b := bb.B[start : start+testStringLen]
+			if string(b) != testString {
+				t.Fatalf("except: %q, got: %q", testString, b)
+			}
+		}
+		testBB.PutReader(rb)
+	}
+
+	rb := testBB.GetReader()
+	_, _ = testBB.WriteString("x")
+	defer testBB.PutAll(rb)
+	newBB := Get(testStringLen + 1)
+	_, _ = newBB.ReadFrom(rb)
+	if newBB.String() != testString {
+		t.Fatalf("except: %q, got: %q", testString, newBB.String())
+	}
+
+	rb = GetReader(testBytes)
+	PutReader(rb)
+}
+
 func TestBuffer_WriteTo(t *testing.T) {
 	var buf bytes.Buffer
-	bb := NewBytes(testBytes)
+	bb := NewBuffer(testBytes)
 	for i := 0; i < 10; i++ {
 		n, err := bb.WriteTo(&buf)
 		if int(n) != testStringLen {

@@ -10,21 +10,21 @@ import (
 func main() {
 	bb := buffer.Get()
 
-	_ = (io.ReadWriteCloser)(bb)
+	_ = (io.WriteCloser)(bb)
 
 	p := []byte("ff")
 	n, err := bb.Write(p)
 	fmt.Println(n, err)
 
 	bs := make([]byte, 2)
-	n, err = bb.Read(bs)
-	fmt.Println(n, err, string(bs))
+	n = bb.CopyTo(bs)
+	fmt.Println(n, string(bs))
 
 	err = bb.Close()
 	fmt.Println(err)
 
 	// Output:
 	// 2 <nil>
-	// 2 <nil> ff
+	// 2 ff
 	// <nil>
 }
