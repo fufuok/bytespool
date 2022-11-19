@@ -46,8 +46,14 @@ func (bb *Buffer) Bytes() []byte {
 	return bb.B
 }
 
+// Copy return a copy of the Buffer data.
 func (bb *Buffer) Copy() []byte {
-	return append([]byte{}, bb.B...)
+	return defaultPools.bs.NewBytes(bb.B)
+}
+
+// CopyTo same as copy(p, bb.B).
+func (bb *Buffer) CopyTo(p []byte) int {
+	return copy(p, bb.B)
 }
 
 // String implements print.Stringer.
@@ -55,6 +61,11 @@ func (bb *Buffer) Copy() []byte {
 // if the Buffer is a nil pointer, it returns "" instead of "<nil>"
 func (bb *Buffer) String() string {
 	return string(bb.B)
+}
+
+// UnsafeString not immutable.
+func (bb *Buffer) UnsafeString() string {
+	return *(*string)(unsafe.Pointer(&bb.B))
 }
 
 func (bb *Buffer) Len() int {
