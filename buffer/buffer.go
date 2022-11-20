@@ -289,8 +289,13 @@ func (bb *Buffer) PutReader(r *bytes.Reader) bool {
 }
 
 // PutAll put io.Reader and Buffer into the pool.
-func (bb *Buffer) PutAll(r *bytes.Reader) {
-	readerpool.Release(r)
+// The Buffer must be placed in the pool.
+func (bb *Buffer) PutAll(r ...*bytes.Reader) {
+	if len(r) > 0 {
+		for i := range r {
+			readerpool.Release(r[i])
+		}
+	}
 	defaultPools.bs.Release(bb.B)
 	bb.B = nil
 	defaultPools.buf.Put(bb)

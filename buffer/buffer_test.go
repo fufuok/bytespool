@@ -256,6 +256,7 @@ func TestBuffer_Reader(t *testing.T) {
 		}
 		testBB.PutReader(rb)
 	}
+	bb.PutAll()
 
 	rb := testBB.GetReader()
 	testBB.AppendByte('x')
