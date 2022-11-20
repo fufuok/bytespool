@@ -227,8 +227,10 @@ func TestBuffer_ReadFrom(t *testing.T) {
 func TestBuffer_Reader(t *testing.T) {
 	prefix := "prefix"
 	prefixLen := len(prefix)
-	testBB := NewString(testString)
-	bb := NewString(prefix)
+	testBB := Get(testStringLen)
+	testBB.Append(testBytes)
+	bb := Get(prefixLen)
+	bb.AppendString(prefix)
 	for i := 0; i < 10; i++ {
 		rb := testBB.GetReader()
 		_ = (io.Reader)(rb)
@@ -256,7 +258,7 @@ func TestBuffer_Reader(t *testing.T) {
 	}
 
 	rb := testBB.GetReader()
-	_, _ = testBB.WriteString("x")
+	testBB.AppendByte('x')
 	defer testBB.PutAll(rb)
 	newBB := Get(testStringLen + 1)
 	_, _ = newBB.ReadFrom(rb)

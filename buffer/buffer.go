@@ -133,6 +133,11 @@ func (bb *Buffer) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
+// Append appends all data in p to Buffer.B.
+func (bb *Buffer) Append(p []byte) {
+	bb.B = append(bb.B, p...)
+}
+
 // WriteByte implements io.ByteWriter.
 //
 // The function appends the byte c to Buffer.B.
@@ -142,6 +147,11 @@ func (bb *Buffer) WriteByte(c byte) error {
 	return nil
 }
 
+// AppendByte appends the byte c to Buffer.B.
+func (bb *Buffer) AppendByte(c byte) {
+	bb.B = append(bb.B, c)
+}
+
 // WriteString implements io.StringWriter.
 //
 // The function appends the s to Buffer.B.
@@ -149,6 +159,11 @@ func (bb *Buffer) WriteByte(c byte) error {
 func (bb *Buffer) WriteString(s string) (int, error) {
 	bb.B = appendString(bb.B, s)
 	return len(s), nil
+}
+
+// AppendString appends the s to Buffer.B.
+func (bb *Buffer) AppendString(s string) {
+	bb.B = append(bb.B, s...)
 }
 
 // Set sets Buffer.B to p.
