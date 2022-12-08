@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -23,6 +24,10 @@ type CapacityPools struct {
 	maxIndex int
 	decIndex int
 	pools    []*bytesPool
+
+	newCounter   uint64
+	bigCounter   uint64
+	reuseCounter uint64
 }
 
 type bytesPool struct {
@@ -103,14 +108,17 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 
 	bp := p.getMakePool(size)
 	if bp == nil {
+		atomic.AddUint64(&p.bigCounter, uint64(size))
 		return make([]byte, size, size)
 	}
 
 	ptr, _ := bp.pool.Get().(unsafe.Pointer)
 	if ptr == nil {
+		atomic.AddUint64(&p.newCounter, uint64(bp.capacity))
 		return make([]byte, size, bp.capacity)
 	}
 
+	atomic.AddUint64(&p.reuseCounter, uint64(bp.capacity))
 	sh := (*reflect.SliceHeader)(unsafe.Pointer(&buf))
 	sh.Data = uintptr(ptr)
 	sh.Len = size
