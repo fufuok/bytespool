@@ -68,15 +68,7 @@ func NewCapacityPools(minSize, maxSize int) *CapacityPools {
 }
 
 func newBytesPool(size int) *bytesPool {
-	return &bytesPool{
-		capacity: size,
-		pool: sync.Pool{
-			New: func() interface{} {
-				buf := make([]byte, size, size)
-				return &buf
-			},
-		},
-	}
+	return &bytesPool{capacity: size}
 }
 
 // Clone return a copy of the byte slice
@@ -107,9 +99,6 @@ func (p *CapacityPools) MakeMin() []byte {
 func (p *CapacityPools) New(size int) (buf []byte) {
 	if size < 0 {
 		size = 0
-	}
-	if size > p.maxSize {
-		return make([]byte, size, size)
 	}
 
 	bp := p.getMakePool(size)
