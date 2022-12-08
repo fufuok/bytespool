@@ -71,10 +71,10 @@ func Get(capacity ...int) *Buffer {
 func New(size int) *Buffer {
 	v := defaultPools.buf.Get()
 	if v != nil {
-		buf := v.(*Buffer)
-		buf.B = defaultPools.bs.New(size)
-		buf.RefReset()
-		return buf
+		bb := v.(*Buffer)
+		bb.B = defaultPools.bs.New(size)
+		bb.RefReset()
+		return bb
 	}
 	return &Buffer{
 		B: defaultPools.bs.New(size),
@@ -89,6 +89,13 @@ func New(size int) *Buffer {
 // prepare a Buffer to read existing data. It can also be used to set
 // the initial size of the internal buffer for writing.
 func NewBuffer(buf []byte) *Buffer {
+	v := defaultPools.buf.Get()
+	if v != nil {
+		bb := v.(*Buffer)
+		bb.B = buf
+		bb.RefReset()
+		return bb
+	}
 	return &Buffer{B: buf}
 }
 
