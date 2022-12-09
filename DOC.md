@@ -28,6 +28,7 @@ import "github.com/fufuok/bytespool"
 - [func NewString(s string) []byte](<#func-newstring>)
 - [func Put(buf []byte)](<#func-put>)
 - [func Release(buf []byte) bool](<#func-release>)
+- [func RuntimeStats(ps ...*CapacityPools) map[string]uint64](<#func-runtimestats>)
 - [type BufPool](<#type-bufpool>)
   - [func NewBufPool(size int) *BufPool](<#func-newbufpool>)
   - [func (b *BufPool) Get() []byte](<#func-bufpool-get>)
@@ -232,6 +233,12 @@ func Put(buf []byte)
 
 ```go
 func Release(buf []byte) bool
+```
+
+## func RuntimeStats
+
+```go
+func RuntimeStats(ps ...*CapacityPools) map[string]uint64
 ```
 
 ## type BufPool

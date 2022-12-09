@@ -51,6 +51,7 @@ func NewMin() []byte
 func NewString(s string) []byte
 func Put(buf []byte)
 func Release(buf []byte) bool
+func RuntimeStats(ps ...*CapacityPools) map[string]uint64
 type BufPool struct{ ... }
     func NewBufPool(size int) *BufPool
 type CapacityPools struct{ ... }
@@ -233,6 +234,32 @@ func main() {
 ### 🔥 Buffer
 
 Similar to bytes.Buffer, based on bytespool.
+
+```go
+package buffer // import "github.com/fufuok/bytespool/buffer"
+
+var ErrTooLarge = errors.New("buffer: too large") ...
+var DefaultBufferSize = 64
+func GetReader(bs []byte) *bytes.Reader
+func MaxSize() int
+func MinSize() int
+func Put(bb *Buffer)
+func PutReader(r *bytes.Reader)
+func Release(bb *Buffer) (ok bool)
+func RuntimeStats() map[string]uint64
+func SetCapacity(minSize, maxSize int)
+type Buffer struct{ ... }
+    func Clone(bb *Buffer) *Buffer
+    func Get(capacity ...int) *Buffer
+    func Make(capacity int) *Buffer
+    func Make64(capacity uint64) *Buffer
+    func MakeMax() *Buffer
+    func MakeMin() *Buffer
+    func New(size int) *Buffer
+    func NewBuffer(buf []byte) *Buffer
+    func NewBytes(bs []byte) *Buffer
+    func NewString(s string) *Buffer
+```
 
 Please see:
 

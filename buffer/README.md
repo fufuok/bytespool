@@ -15,6 +15,7 @@ import "github.com/fufuok/bytespool/buffer"
 - [func Put(bb *Buffer)](<#func-put>)
 - [func PutReader(r *bytes.Reader)](<#func-putreader>)
 - [func Release(bb *Buffer) (ok bool)](<#func-release>)
+- [func RuntimeStats() map[string]uint64](<#func-runtimestats>)
 - [func SetCapacity(minSize, maxSize int)](<#func-setcapacity>)
 - [type Buffer](<#type-buffer>)
   - [func Clone(bb *Buffer) *Buffer](<#func-clone>)
@@ -27,6 +28,9 @@ import "github.com/fufuok/bytespool/buffer"
   - [func NewBuffer(buf []byte) *Buffer](<#func-newbuffer>)
   - [func NewBytes(bs []byte) *Buffer](<#func-newbytes>)
   - [func NewString(s string) *Buffer](<#func-newstring>)
+  - [func (bb *Buffer) Append(p []byte)](<#func-buffer-append>)
+  - [func (bb *Buffer) AppendByte(c byte)](<#func-buffer-appendbyte>)
+  - [func (bb *Buffer) AppendString(s string)](<#func-buffer-appendstring>)
   - [func (bb *Buffer) Bytes() []byte](<#func-buffer-bytes>)
   - [func (bb *Buffer) Cap() int](<#func-buffer-cap>)
   - [func (bb *Buffer) Clone() *Buffer](<#func-buffer-clone>)
@@ -38,7 +42,7 @@ import "github.com/fufuok/bytespool/buffer"
   - [func (bb *Buffer) Guarantee(n int)](<#func-buffer-guarantee>)
   - [func (bb *Buffer) Len() int](<#func-buffer-len>)
   - [func (bb *Buffer) Put()](<#func-buffer-put>)
-  - [func (bb *Buffer) PutAll(r *bytes.Reader)](<#func-buffer-putall>)
+  - [func (bb *Buffer) PutAll(r ...*bytes.Reader)](<#func-buffer-putall>)
   - [func (bb *Buffer) PutReader(r *bytes.Reader) bool](<#func-buffer-putreader>)
   - [func (bb *Buffer) ReadFrom(r io.Reader) (int64, error)](<#func-buffer-readfrom>)
   - [func (bb *Buffer) RefAdd(delta int64)](<#func-buffer-refadd>)
@@ -122,6 +126,12 @@ func Release(bb *Buffer) (ok bool)
 ```
 
 Release put B back into the byte pool of the corresponding scale, and put the Buffer back into the buffer pool. Buffers smaller than the minimum capacity or larger than the maximum capacity are discarded.
+
+## func RuntimeStats
+
+```go
+func RuntimeStats() map[string]uint64
+```
 
 ## func SetCapacity
 
@@ -252,6 +262,30 @@ func NewString(s string) *Buffer
 
 NewString returns a byte slice of the specified content.
 
+### func \(\*Buffer\) Append
+
+```go
+func (bb *Buffer) Append(p []byte)
+```
+
+Append appends all data in p to Buffer.B.
+
+### func \(\*Buffer\) AppendByte
+
+```go
+func (bb *Buffer) AppendByte(c byte)
+```
+
+AppendByte appends the byte c to Buffer.B.
+
+### func \(\*Buffer\) AppendString
+
+```go
+func (bb *Buffer) AppendString(s string)
+```
+
+AppendString appends the s to Buffer.B.
+
 ### func \(\*Buffer\) Bytes
 
 ```go
@@ -337,10 +371,10 @@ Put is the same as b.Release.
 ### func \(\*Buffer\) PutAll
 
 ```go
-func (bb *Buffer) PutAll(r *bytes.Reader)
+func (bb *Buffer) PutAll(r ...*bytes.Reader)
 ```
 
-PutAll put io.Reader and Buffer into the pool.
+PutAll put io.Reader and Buffer into the pool. The Buffer must be placed in the pool.
 
 ### func \(\*Buffer\) PutReader
 
