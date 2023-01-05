@@ -24,7 +24,7 @@ type pools struct {
 
 // SetCapacity initialize to the default byte slice pool.
 // Divide into multiple pools according to the capacity scale.
-// Maximum range of byte slice pool: [2,1<<31]
+// Maximum range of byte slice pool: [2,math.MaxInt32]
 func SetCapacity(minSize, maxSize int) {
 	defaultPools.bs = bytespool.NewCapacityPools(minSize, maxSize)
 }

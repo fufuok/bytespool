@@ -41,11 +41,11 @@ func InitDefaultPools(minSize, maxSize int) {
 }
 
 // NewCapacityPools divide into multiple pools according to the capacity scale.
-// Maximum range of byte slice pool: [minCapacity,1<<31]
+// Maximum range of byte slice pool: [minCapacity,math.MaxInt32]
 func NewCapacityPools(minSize, maxSize int) *CapacityPools {
 	var pools []*bytesPool
 	if maxSize > math.MaxInt32 {
-		maxSize = 1 << 31
+		maxSize = math.MaxInt32
 	}
 	if maxSize < minCapacity {
 		maxSize = minCapacity

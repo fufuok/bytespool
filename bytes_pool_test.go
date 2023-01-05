@@ -168,15 +168,15 @@ func TestCapacityPools_Boundary(t *testing.T) {
 	if pools.minSize != minCapacity {
 		t.Fatalf("expect min capacity is %d, but got %d", minCapacity, pools.minSize)
 	}
-	if pools.maxSize != math.MaxInt32+1 {
+	if pools.maxSize != math.MaxInt32 {
 		t.Fatalf("expect max capacity is %d, but got %d", math.MaxInt32, pools.maxSize)
 	}
 
 	pools = NewCapacityPools(math.MaxInt64, math.MaxInt64)
-	if pools.minSize != math.MaxInt32+1 {
+	if pools.minSize != math.MaxInt32 {
 		t.Fatalf("expect min capacity is %d, but got %d", math.MaxInt32, pools.minSize)
 	}
-	if pools.maxSize != math.MaxInt32+1 {
+	if pools.maxSize != math.MaxInt32 {
 		t.Fatalf("expect max capacity is %d, but got %d", math.MaxInt32, pools.maxSize)
 	}
 }
