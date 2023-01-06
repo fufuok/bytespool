@@ -32,12 +32,11 @@ var (
 //     bb.Put()
 //     bb.Release()
 type Buffer struct {
-	B []byte
-
 	// Reference counting ensures that only one successfully puts it back into the pool.
 	// c: stores the number of additional references,
 	// c == 1: there are 2 references in total.
 	c int64
+	B []byte
 }
 
 // Clone returns a copy of the Buffer.B.

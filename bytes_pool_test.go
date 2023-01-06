@@ -164,7 +164,7 @@ func TestCapacityPools_Boundary(t *testing.T) {
 		t.Fatal("expect to release the buffer failure, but not")
 	}
 
-	pools = NewCapacityPools(math.MinInt64, math.MaxInt64)
+	pools = NewCapacityPools(math.MinInt32, math.MaxInt32)
 	if pools.minSize != minCapacity {
 		t.Fatalf("expect min capacity is %d, but got %d", minCapacity, pools.minSize)
 	}
@@ -172,7 +172,7 @@ func TestCapacityPools_Boundary(t *testing.T) {
 		t.Fatalf("expect max capacity is %d, but got %d", math.MaxInt32, pools.maxSize)
 	}
 
-	pools = NewCapacityPools(math.MaxInt64, math.MaxInt64)
+	pools = NewCapacityPools(math.MaxInt32, math.MaxInt32)
 	if pools.minSize != math.MaxInt32 {
 		t.Fatalf("expect min capacity is %d, but got %d", math.MaxInt32, pools.minSize)
 	}

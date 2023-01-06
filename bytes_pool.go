@@ -19,15 +19,14 @@ const (
 var DefaultCapacityPools = NewCapacityPools(defaultMinSize, defaultMaxSize)
 
 type CapacityPools struct {
-	minSize  int
-	maxSize  int
-	maxIndex int
-	decIndex int
-	pools    []*bytesPool
-
 	newCounter   uint64
 	bigCounter   uint64
 	reuseCounter uint64
+	minSize      int
+	maxSize      int
+	maxIndex     int
+	decIndex     int
+	pools        []*bytesPool
 }
 
 type bytesPool struct {
