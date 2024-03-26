@@ -149,12 +149,12 @@ func TestCapacityPools_Boundary(t *testing.T) {
 		t.Fatal("expect to release the buffer successfully, but not")
 	}
 
-	buf = make([]byte, 1, 1)
+	buf = make([]byte, 1)
 	if pools.Release(buf) {
 		t.Fatal("expect to release the buffer failure, but not")
 	}
 
-	buf = make([]byte, 8, 8)
+	buf = make([]byte, 8)
 	if pools.Release(buf) {
 		t.Fatal("expect to release the buffer failure, but not")
 	}

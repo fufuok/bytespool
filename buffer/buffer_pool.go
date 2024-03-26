@@ -12,10 +12,8 @@ var defaultPools = &pools{
 	bs: bytespool.DefaultCapacityPools,
 }
 
-var (
-	// DefaultBufferSize is an initial allocation minimal capacity.
-	DefaultBufferSize = 64
-)
+// DefaultBufferSize is an initial allocation minimal capacity.
+var DefaultBufferSize = 64
 
 type pools struct {
 	bs  *bytespool.CapacityPools

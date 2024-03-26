@@ -108,7 +108,7 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 	bp := p.getMakePool(size)
 	if bp == nil {
 		atomic.AddUint64(&p.bigCounter, uint64(size))
-		return make([]byte, size, size)
+		return make([]byte, size)
 	}
 
 	ptr, _ := bp.pool.Get().(unsafe.Pointer)

@@ -26,11 +26,14 @@ var (
 // The zero value for Buffer is an empty buffer ready to use, but capacity will be 0.
 // It is recommended to use pool to initialize a Buffer:
 // e.g.::
-//     bb := buffer.Get()    // The initial capacity is 64 (DefaultBufferSize)
-//     bb := buffer.Make(8)  // The initial capacity is 8
+//
+//	bb := buffer.Get()    // The initial capacity is 64 (DefaultBufferSize)
+//	bb := buffer.Make(8)  // The initial capacity is 8
+//
 // After use, put it back in the pool:
-//     bb.Put()
-//     bb.Release()
+//
+//	bb.Put()
+//	bb.Release()
 type Buffer struct {
 	// Reference counting ensures that only one successfully puts it back into the pool.
 	// c: stores the number of additional references,
