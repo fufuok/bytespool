@@ -3,8 +3,6 @@ package bytespool
 import (
 	"math"
 	"math/bits"
-	"reflect"
-	"runtime"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -56,9 +54,9 @@ func NewCapacityPools(minSize, maxSize int) *CapacityPools {
 		minSize = minCapacity
 	}
 
-	min := getIndex(minSize)
-	max := getIndex(maxSize)
-	for i := min; i <= max; i++ {
+	mn := getIndex(minSize)
+	mx := getIndex(maxSize)
+	for i := mn; i <= mx; i++ {
 		pools = append(pools, newBytesPool(1<<i))
 	}
 
@@ -66,7 +64,7 @@ func NewCapacityPools(minSize, maxSize int) *CapacityPools {
 		minSize:  minSize,
 		maxSize:  maxSize,
 		maxIndex: len(pools) - 1,
-		decIndex: min,
+		decIndex: mn,
 		pools:    pools,
 	}
 }
@@ -108,21 +106,20 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 	bp := p.getMakePool(size)
 	if bp == nil {
 		atomic.AddUint64(&p.bigCounter, uint64(size))
-		return make([]byte, size)
+		return Bytes(size, size)
 	}
 
-	ptr, _ := bp.pool.Get().(unsafe.Pointer)
+	ptr, _ := bp.pool.Get().(*byte)
 	if ptr == nil {
 		atomic.AddUint64(&p.newCounter, uint64(bp.capacity))
-		return make([]byte, size, bp.capacity)
+		return Bytes(size, bp.capacity)
 	}
 
 	atomic.AddUint64(&p.reuseCounter, uint64(bp.capacity))
-	sh := (*reflect.SliceHeader)(unsafe.Pointer(&buf))
-	sh.Data = uintptr(ptr)
+	sh := (*bytesHeader)(unsafe.Pointer(&buf))
+	sh.Data = ptr
 	sh.Len = size
 	sh.Cap = bp.capacity
-	runtime.KeepAlive(ptr)
 	return
 }
 
@@ -192,8 +189,8 @@ func (p *CapacityPools) Release(buf []byte) bool {
 	if bp == nil {
 		return false
 	}
-	// array pointer
-	bp.pool.Put(unsafe.Pointer(&buf[:1][0]))
+	sh := (*bytesHeader)(unsafe.Pointer(&buf))
+	bp.pool.Put(sh.Data)
 	return true
 }
 
