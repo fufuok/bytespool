@@ -116,6 +116,10 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 	}
 
 	atomic.AddUint64(&p.reuseCounter, uint64(bp.capacity))
+
+	// go1.20
+	// return unsafe.Slice(ptr, bp.capacity)[:size]
+
 	sh := (*bytesHeader)(unsafe.Pointer(&buf))
 	sh.Data = ptr
 	sh.Len = size
@@ -189,6 +193,10 @@ func (p *CapacityPools) Release(buf []byte) bool {
 	if bp == nil {
 		return false
 	}
+
+	// go1.20, store array pointer,
+	// bp.pool.Put(unsafe.SliceData(buf))
+
 	sh := (*bytesHeader)(unsafe.Pointer(&buf))
 	bp.pool.Put(sh.Data)
 	return true
