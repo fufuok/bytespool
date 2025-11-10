@@ -11,8 +11,10 @@ func TestRuntimeStats(t *testing.T) {
 	defer func() {
 		defaultPools.bs = bytespool.DefaultCapacityPools
 	}()
+
 	var n, b, r uint64
 	SetCapacity(2, 128)
+	SetWithStats(true)
 	gc := debug.SetGCPercent(-1)
 
 	n += 8
@@ -31,13 +33,13 @@ func TestRuntimeStats(t *testing.T) {
 
 	debug.SetGCPercent(gc)
 	stats := RuntimeStats()
-	if stats["New"] != n {
-		t.Fatalf("expect newCounter is %d, but got %d", n, stats["New"])
+	if stats["NewBytes"] != n {
+		t.Fatalf("expect newBytes is %d, but got %d", n, stats["NewBytes"])
 	}
-	if stats["Big"] != b {
-		t.Fatalf("expect bigCounter is %d, but got %d", n, stats["Big"])
+	if stats["OutBytes"] != b {
+		t.Fatalf("expect outBytes is %d, but got %d", n, stats["OutBytes"])
 	}
-	if stats["Reuse"] != r {
-		t.Fatalf("expect reuseCounter is %d, but got %d", n, stats["Reuse"])
+	if stats["ReusedBytes"] != r {
+		t.Fatalf("expect reusedBytes is %d, but got %d", n, stats["ReusedBytes"])
 	}
 }

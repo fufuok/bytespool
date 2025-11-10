@@ -3,6 +3,7 @@ package bytespool
 import (
 	"math"
 	"math/bits"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"unsafe"
@@ -17,19 +18,23 @@ const (
 var DefaultCapacityPools = NewCapacityPools(defaultMinSize, defaultMaxSize)
 
 type CapacityPools struct {
-	newCounter   uint64
-	bigCounter   uint64
-	reuseCounter uint64
-	minSize      int
-	maxSize      int
-	maxIndex     int
-	decIndex     int
-	pools        []*bytesPool
+	pools       []*bytesPool
+	minSize     int
+	maxSize     int
+	maxIndex    int
+	decIndex    int
+	newBytes    uint64 // New bytes allocated for pools
+	outBytes    uint64 // Bytes allocated outside pools
+	outCount    uint64 // Number of bytes allocated outside pools
+	reusedBytes uint64 // Bytes reused from pools
+	withStats   bool   // Controls whether to collect statistics for this pool
 }
 
+// bytesPool represents a pool for a specific capacity
 type bytesPool struct {
-	capacity int
-	pool     sync.Pool
+	pool      sync.Pool
+	capacity  int
+	reuseHits uint64 // Number of times byte slices were reused from this pool
 }
 
 // InitDefaultPools initialize to the default pool.
@@ -61,11 +66,12 @@ func NewCapacityPools(minSize, maxSize int) *CapacityPools {
 	}
 
 	return &CapacityPools{
-		minSize:  minSize,
-		maxSize:  maxSize,
-		maxIndex: len(pools) - 1,
-		decIndex: mn,
-		pools:    pools,
+		pools:     pools,
+		minSize:   minSize,
+		maxSize:   maxSize,
+		maxIndex:  len(pools) - 1,
+		decIndex:  mn,
+		withStats: false,
 	}
 }
 
@@ -105,17 +111,26 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 
 	bp := p.getMakePool(size)
 	if bp == nil {
-		atomic.AddUint64(&p.bigCounter, uint64(size))
+		if p.withStats {
+			atomic.AddUint64(&p.outCount, 1)
+			atomic.AddUint64(&p.outBytes, uint64(size))
+		}
 		return Bytes(size, size)
 	}
 
 	ptr, _ := bp.pool.Get().(*byte)
 	if ptr == nil {
-		atomic.AddUint64(&p.newCounter, uint64(bp.capacity))
+		if p.withStats {
+			atomic.AddUint64(&p.newBytes, uint64(bp.capacity))
+		}
 		return Bytes(size, bp.capacity)
 	}
 
-	atomic.AddUint64(&p.reuseCounter, uint64(bp.capacity))
+	if p.withStats {
+		// per-pool reuse counters
+		atomic.AddUint64(&bp.reuseHits, 1)
+		atomic.AddUint64(&p.reusedBytes, uint64(bp.capacity))
+	}
 
 	// go1.20
 	// return unsafe.Slice(ptr, bp.capacity)[:size]
@@ -212,6 +227,81 @@ func (p *CapacityPools) MinSize() int {
 
 func (p *CapacityPools) MaxSize() int {
 	return p.maxSize
+}
+
+// SetWithStats enables or disables statistics collection for this pool.
+// When enabled, statistics will be collected, but this may affect performance.
+// When disabled (default), all atomic operations for statistics are skipped for better performance.
+// This function is not thread-safe and should be called before any pool operations.
+func (p *CapacityPools) SetWithStats(t bool) {
+	p.withStats = t
+}
+
+// GetWithStats returns the current status of statistics collection for this pool.
+// When true, statistics are being collected.
+// When false (default), statistics are not being collected.
+func (p *CapacityPools) GetWithStats() bool {
+	return p.withStats
+}
+
+// getTotalNewBytes returns the sum of new bytes allocated across all pools
+func (p *CapacityPools) getTotalNewBytes() uint64 {
+	return atomic.LoadUint64(&p.newBytes)
+}
+
+// getTotalOutBytes returns the sum of bytes allocated outside pools
+func (p *CapacityPools) getTotalOutBytes() uint64 {
+	return atomic.LoadUint64(&p.outBytes)
+}
+
+// getOutCount returns the number of times bytes were allocated outside pools
+func (p *CapacityPools) getOutCount() uint64 {
+	return atomic.LoadUint64(&p.outCount)
+}
+
+// getTotalReusedBytes returns the sum of bytes reused from pools
+func (p *CapacityPools) getTotalReusedBytes() uint64 {
+	return atomic.LoadUint64(&p.reusedBytes)
+}
+
+// getPoolReuseStats returns reuse statistics for each pool capacity
+func (p *CapacityPools) getPoolReuseStats(n int) []PoolStat {
+	if n <= 0 {
+		return nil
+	}
+
+	// collect non-zero reuse hits
+	type kv struct {
+		cap  int
+		hits uint64
+	}
+	arr := make([]kv, 0, len(p.pools))
+	for _, bp := range p.pools {
+		if bp == nil {
+			continue
+		}
+		v := atomic.LoadUint64(&bp.reuseHits)
+		if v == 0 {
+			continue
+		}
+		arr = append(arr, kv{cap: bp.capacity, hits: v})
+	}
+
+	if len(arr) == 0 {
+		return nil
+	}
+
+	// partial sort: if arr is larger than n, use sort.Slice and then trim.
+	sort.Slice(arr, func(i, j int) bool { return arr[i].hits > arr[j].hits })
+	if len(arr) > n {
+		arr = arr[:n]
+	}
+
+	stats := make([]PoolStat, 0, len(arr))
+	for i, kv := range arr {
+		stats = append(stats, PoolStat{Rank: i + 1, Capacity: kv.cap, ReuseHits: kv.hits})
+	}
+	return stats
 }
 
 func (p *CapacityPools) getMakePool(size int) *bytesPool {
