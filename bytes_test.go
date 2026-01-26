@@ -20,7 +20,31 @@ import (
 	"testing"
 )
 
-// Ref: xiaost/bytedance-gopkg
+func TestBytes(t *testing.T) {
+	// Test basic functionality
+	b := Bytes(5, 10)
+	if len(b) != 5 {
+		t.Fatalf("expected length 5, got %d", len(b))
+	}
+	if cap(b) != 10 {
+		t.Fatalf("expected capacity 10, got %d", cap(b))
+	}
+
+	// Test zero length and capacity
+	b = Bytes(0, 0)
+	if len(b) != 0 || cap(b) != 0 {
+		t.Fatalf("expected empty slice, got len=%d, cap=%d", len(b), cap(b))
+	}
+
+	// Test equal length and capacity
+	b = Bytes(3, 3)
+	if len(b) != 3 || cap(b) != 3 {
+		t.Fatalf("expected len=3, cap=3, got len=%d, cap=%d", len(b), cap(b))
+	}
+}
+
+var data []byte
+
 const block1kb = 1024
 
 func BenchmarkParallelDirtBytes(b *testing.B) {
@@ -40,7 +64,6 @@ func BenchmarkParallelDirtBytes(b *testing.B) {
 }
 
 func BenchmarkDirtBytes(b *testing.B) {
-	var data []byte
 	for size := block1kb; size < block1kb*20; size += block1kb * 2 {
 		b.Run(fmt.Sprintf("size=%dkb", size/block1kb), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
@@ -48,11 +71,9 @@ func BenchmarkDirtBytes(b *testing.B) {
 			}
 		})
 	}
-	_ = data
 }
 
 func BenchmarkOriginBytes(b *testing.B) {
-	var data []byte
 	for size := block1kb; size < block1kb*20; size += block1kb * 2 {
 		b.Run(fmt.Sprintf("size=%dkb", size/block1kb), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
@@ -60,32 +81,4 @@ func BenchmarkOriginBytes(b *testing.B) {
 			}
 		})
 	}
-	_ = data
-}
-
-func BenchmarkNormal4096Parallel(b *testing.B) {
-	b.ReportAllocs()
-	b.RunParallel(func(pb *testing.PB) {
-		var buf []byte
-		for pb.Next() {
-			for i := 0; i < b.N; i++ {
-				buf = make([]byte, 0, 4096)
-			}
-		}
-		_ = buf
-	})
-}
-
-func BenchmarkMCache4096Parallel(b *testing.B) {
-	b.ReportAllocs()
-	b.RunParallel(func(pb *testing.PB) {
-		var buf []byte
-		for pb.Next() {
-			for i := 0; i < b.N; i++ {
-				buf = Get(4096)
-				Put(buf)
-			}
-		}
-		_ = buf
-	})
 }

@@ -4,6 +4,16 @@ Reuse used byte slices to achieve zero allocation.
 
 The existing byte slices are stored in groups according to the capacity length range, and suitable byte slice objects are automatically allocated according to the capacity length when used.
 
+> // WARNING: This implementation stores the pointer to the underlying array (not the []byte itself)
+> // for maximum performance and zero allocations. Only byte slices allocated by Bytes() (see bytes.go)
+> // are allowed to be put into the pool. Never put slices allocated by make([]byte) or from Go runtime
+> // into the pool, otherwise it will cause memory safety issues and may lead to bad pointer panics.
+> //
+> // This design is safe ONLY IF you guarantee that all slices put into the pool are originally obtained
+> // from this pool's Get/New methods (i.e., from Bytes()).
+> //
+> // DO NOT expose this pool to untrusted code or allow external []byte to be pooled.
+
 ## ✨ Features
 
 - Customize the capacity range, or use the default pool.

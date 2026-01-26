@@ -12,6 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:build !tinygo
+// +build !tinygo
+
+// Bytes provides optimized memory allocation using runtime.mallocgc.
+// This implementation is excluded from TinyGo builds (including WASM environments)
+// because TinyGo doesn't support the same unsafe operations and runtime symbols
+// as standard Go. For TinyGo compatibility, use the implementation in bytes_tinygo.go.
+
 package bytespool
 
 import (
@@ -36,7 +44,7 @@ func mallocgc(size uintptr, typ unsafe.Pointer, needzero bool) unsafe.Pointer
 // Bytes allocates a byte slice but does not clean up the memory it references.
 // Throw a fatal error instead of panic if cap is greater than runtime.maxAlloc.
 // NOTE: MUST set any byte element before it's read.
-// Ref: xiaost/bytedance-gopkg
+// Ref: bytedance/gopkg
 func Bytes(len, cap int) (b []byte) {
 	if len < 0 || len > cap {
 		panic("dirtmake.Bytes: len out of range")

@@ -30,7 +30,17 @@ type CapacityPools struct {
 	withStats   bool   // Controls whether to collect statistics for this pool
 }
 
-// bytesPool represents a pool for a specific capacity
+// bytesPool represents a pool for a specific capacity.
+//
+// WARNING: This implementation stores the pointer to the underlying array (not the []byte itself)
+// for maximum performance and zero allocations. Only byte slices allocated by Bytes() (see bytes.go)
+// are allowed to be put into the pool. Never put slices allocated by make([]byte) or from Go runtime
+// into the pool, otherwise it will cause memory safety issues and may lead to bad pointer panics.
+//
+// This design is safe ONLY IF you guarantee that all slices put into the pool are originally obtained
+// from this pool's Get/New methods (i.e., from Bytes()).
+//
+// DO NOT expose this pool to untrusted code or allow external []byte to be pooled.
 type bytesPool struct {
 	pool      sync.Pool
 	capacity  int
@@ -101,9 +111,11 @@ func (p *CapacityPools) MakeMin() []byte {
 	return p.New(p.minSize)[:0]
 }
 
-// New return byte slice of the specified size.
-// Warning: may contain old data.
-// Warning: returned buf is never equal to nil
+// New returns a byte slice of the specified size.
+// The returned slice may contain old data and is never nil.
+//
+// WARNING: Only use Release/Put to return slices that were originally allocated by Bytes() (i.e., from this pool).
+// Never mix slices from make([]byte) or other sources, or you risk memory corruption and runtime panics.
 func (p *CapacityPools) New(size int) (buf []byte) {
 	if size < 0 {
 		size = 0
@@ -118,8 +130,8 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 		return Bytes(size, size)
 	}
 
-	ptr, _ := bp.pool.Get().(*byte)
-	if ptr == nil {
+	ptr, ok := bp.pool.Get().(*byte)
+	if !ok || ptr == nil {
 		if p.withStats {
 			atomic.AddUint64(&p.newBytes, uint64(bp.capacity))
 		}
@@ -201,8 +213,13 @@ func (p *CapacityPools) AppendString(buf []byte, elems string) []byte {
 	return append(buf, elems...)
 }
 
-// Release put it back into the byte pool of the corresponding scale.
+// Release puts the buffer back into the byte pool of the corresponding scale.
+// Only buffers originally allocated by Bytes() (not by make([]byte)) are allowed.
 // Buffers smaller than the minimum capacity or larger than the maximum capacity are discarded.
+//
+// WARNING: Never put a slice allocated by make([]byte) or from Go runtime into this pool.
+// Only slices obtained from this pool's New/Get methods (i.e., from Bytes()) are safe to release.
+// Violating this rule will cause memory safety issues and may lead to runtime panics.
 func (p *CapacityPools) Release(buf []byte) bool {
 	bp := p.getReleasePool(cap(buf))
 	if bp == nil {
