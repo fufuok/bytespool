@@ -17,6 +17,8 @@ func GetWithStats() bool {
 
 // RuntimeStats returns runtime statistics for byte pools.
 // The statistics include:
+// - MinSize: minimum pool size
+// - MaxSize: maximum pool size
 // - NewBytes: total bytes newly allocated for pools
 // - OutBytes: total bytes allocated outside pools
 // - OutCount: total number of bytes allocated outside pools
@@ -39,6 +41,8 @@ func RuntimeStats(ps ...*CapacityPools) map[string]uint64 {
 	oc := p.getOutCount()
 	rb := p.getTotalReusedBytes()
 	return map[string]uint64{
+		"MinSize":     uint64(p.MinSize()),
+		"MaxSize":     uint64(p.MaxSize()),
 		"NewBytes":    nb,
 		"OutBytes":    ob,
 		"OutCount":    oc,
@@ -49,6 +53,8 @@ func RuntimeStats(ps ...*CapacityPools) map[string]uint64 {
 // RuntimeSummary is a structured summary of runtime pool statistics.
 // It contains global byte counters and the top pools by reuse hits.
 type RuntimeSummary struct {
+	MinSize     int        // minimum pool size
+	MaxSize     int        // maximum pool size
 	NewBytes    uint64     // total bytes newly allocated for pools
 	OutBytes    uint64     // total bytes allocated outside pools
 	OutCount    uint64     // total number of bytes allocated outside pools
@@ -69,6 +75,8 @@ func RuntimeStatsSummary(topN int, ps ...*CapacityPools) RuntimeSummary {
 	}
 
 	summary := RuntimeSummary{
+		MinSize:     p.MinSize(),
+		MaxSize:     p.MaxSize(),
 		NewBytes:    p.getTotalNewBytes(),
 		OutBytes:    p.getTotalOutBytes(),
 		OutCount:    p.getOutCount(),
@@ -81,10 +89,13 @@ func RuntimeStatsSummary(topN int, ps ...*CapacityPools) RuntimeSummary {
 }
 
 // PoolStat represents a pool statistic entry
+// - Rank: pool rank by reuse hits (1-based)
+// - Capacity: pool capacity
+// - ReuseHits: total number of times bytes have been reused from the pool
 type PoolStat struct {
-	Rank      int
-	Capacity  int
-	ReuseHits uint64
+	Rank      int    // pool rank by reuse hits (1-based)
+	Capacity  int    // pool capacity
+	ReuseHits uint64 // total number of times bytes have been reused from the pool
 }
 
 // PoolReuseStats returns the top N pool reuse statistics (by reuse hits).

@@ -31,13 +31,20 @@ func TestRuntimeStats(t *testing.T) {
 		t.Fatalf("expect newBytes is %d, but got %d", n, stats["NewBytes"])
 	}
 	if stats["OutBytes"] != b {
-		t.Fatalf("expect outBytes is %d, but got %d", n, stats["OutBytes"])
+		t.Fatalf("expect outBytes is %d, but got %d", b, stats["OutBytes"])
 	}
 	if stats["OutCount"] != 1 {
 		t.Fatalf("expect outCount is %d, but got %d", 1, stats["OutCount"])
 	}
 	if stats["ReusedBytes"] != r {
-		t.Fatalf("expect reusedBytes is %d, but got %d", n, stats["ReusedBytes"])
+		t.Fatalf("expect reusedBytes is %d, but got %d", r, stats["ReusedBytes"])
+	}
+	// Test MinSize and MaxSize in map
+	if stats["MinSize"] != 2 {
+		t.Fatalf("expect MinSize is 2, but got %d", stats["MinSize"])
+	}
+	if stats["MaxSize"] != 128 {
+		t.Fatalf("expect MaxSize is 128, but got %d", stats["MaxSize"])
 	}
 }
 
@@ -88,10 +95,30 @@ func TestRuntimeStatsSummary(t *testing.T) {
 	pool := NewCapacityPools(8, 1024)
 	pool.SetWithStats(true)
 	stats := RuntimeStats(pool)
-	requiredKeys := []string{"NewBytes", "OutBytes", "OutCount", "ReusedBytes"}
+	requiredKeys := []string{"NewBytes", "OutBytes", "OutCount", "ReusedBytes", "MinSize", "MaxSize"}
 	for _, key := range requiredKeys {
 		if _, exists := stats[key]; !exists {
 			t.Errorf("Missing required key: %s", key)
 		}
 	}
+}
+
+func TestRuntimeStatsSummaryStruct(t *testing.T) {
+	pool := NewCapacityPools(8, 1024)
+	pool.SetWithStats(true)
+
+	summary := RuntimeStatsSummary(0, pool)
+	// Test MinSize and MaxSize in struct
+	if summary.MinSize != 8 {
+		t.Fatalf("expect MinSize is 8, but got %d", summary.MinSize)
+	}
+	if summary.MaxSize != 1024 {
+		t.Fatalf("expect MaxSize is 1024, but got %d", summary.MaxSize)
+	}
+	// Test that other fields are accessible
+	_ = summary.NewBytes
+	_ = summary.OutBytes
+	_ = summary.OutCount
+	_ = summary.ReusedBytes
+	_ = summary.TopPools
 }
