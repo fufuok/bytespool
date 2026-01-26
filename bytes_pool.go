@@ -11,11 +11,11 @@ import (
 
 const (
 	minCapacity    = 2
-	defaultMinSize = 2
-	defaultMaxSize = 4 * 1024 * 1024 // 4 MiB
+	DefaultMinSize = 2
+	DefaultMaxSize = 4 * 1024 * 1024 // 4 MiB
 )
 
-var DefaultCapacityPools = NewCapacityPools(defaultMinSize, defaultMaxSize)
+var DefaultCapacityPools = NewCapacityPools(DefaultMinSize, DefaultMaxSize)
 
 type CapacityPools struct {
 	pools       []*bytesPool
@@ -115,7 +115,7 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 			atomic.AddUint64(&p.outCount, 1)
 			atomic.AddUint64(&p.outBytes, uint64(size))
 		}
-		return Bytes(size, size)
+		return make([]byte, size, size)
 	}
 
 	ptr, _ := bp.pool.Get().(*byte)
@@ -123,7 +123,7 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 		if p.withStats {
 			atomic.AddUint64(&p.newBytes, uint64(bp.capacity))
 		}
-		return Bytes(size, bp.capacity)
+		return make([]byte, size, bp.capacity)
 	}
 
 	if p.withStats {
@@ -132,14 +132,7 @@ func (p *CapacityPools) New(size int) (buf []byte) {
 		atomic.AddUint64(&p.reusedBytes, uint64(bp.capacity))
 	}
 
-	// go1.20
-	// return unsafe.Slice(ptr, bp.capacity)[:size]
-
-	sh := (*bytesHeader)(unsafe.Pointer(&buf))
-	sh.Data = ptr
-	sh.Len = size
-	sh.Cap = bp.capacity
-	return
+	return unsafe.Slice(ptr, bp.capacity)[:size]
 }
 
 func (p *CapacityPools) Get(size int) []byte {
@@ -209,11 +202,7 @@ func (p *CapacityPools) Release(buf []byte) bool {
 		return false
 	}
 
-	// go1.20, store array pointer,
-	// bp.pool.Put(unsafe.SliceData(buf))
-
-	sh := (*bytesHeader)(unsafe.Pointer(&buf))
-	bp.pool.Put(sh.Data)
+	bp.pool.Put(unsafe.SliceData(buf))
 	return true
 }
 

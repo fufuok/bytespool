@@ -67,12 +67,12 @@ func TestCapacityPools(t *testing.T) {
 }
 
 func TestCapacityPools_Make64(t *testing.T) {
-	buf := Make64(uint64(defaultMinSize))
+	buf := Make64(uint64(DefaultMinSize))
 	if len(buf) != 0 {
 		t.Fatalf("expect buffer len is 0, but got %d", len(buf))
 	}
-	if cap(buf) < defaultMinSize {
-		t.Fatalf("expect buffer cap >= %d, but got %d", defaultMinSize, cap(buf))
+	if cap(buf) < DefaultMinSize {
+		t.Fatalf("expect buffer cap >= %d, but got %d", DefaultMinSize, cap(buf))
 	}
 	buf = New64(uint64(8))
 	if len(buf) != 8 {
@@ -124,19 +124,19 @@ func TestCapacityPools_Boundary(t *testing.T) {
 	}
 
 	buf = NewMin()
-	if len(buf) != defaultMinSize {
-		t.Fatalf("expect buffer len is %d, but got %d", defaultMinSize, len(buf))
+	if len(buf) != DefaultMinSize {
+		t.Fatalf("expect buffer len is %d, but got %d", DefaultMinSize, len(buf))
 	}
-	if cap(buf) < defaultMinSize {
-		t.Fatalf("expect buffer cap >= %d, but got %d", defaultMinSize, cap(buf))
+	if cap(buf) < DefaultMinSize {
+		t.Fatalf("expect buffer cap >= %d, but got %d", DefaultMinSize, cap(buf))
 	}
 
 	buf = NewMax()
-	if len(buf) != defaultMaxSize {
-		t.Fatalf("expect buffer len is %d, but got %d", defaultMaxSize, len(buf))
+	if len(buf) != DefaultMaxSize {
+		t.Fatalf("expect buffer len is %d, but got %d", DefaultMaxSize, len(buf))
 	}
-	if cap(buf) < defaultMaxSize {
-		t.Fatalf("expect buffer cap >= %d, but got %d", defaultMaxSize, cap(buf))
+	if cap(buf) < DefaultMaxSize {
+		t.Fatalf("expect buffer cap >= %d, but got %d", DefaultMaxSize, cap(buf))
 	}
 
 	buf = make([]byte, 0, 2)
@@ -182,17 +182,17 @@ func TestCapacityPools_Boundary(t *testing.T) {
 }
 
 func TestCapacityPools_Default(t *testing.T) {
-	if DefaultCapacityPools.maxIndex+1 != getIndex(defaultMaxSize) {
+	if DefaultCapacityPools.maxIndex+1 != getIndex(DefaultMaxSize) {
 		t.Fatalf("expect count default pools is %d, but got %d",
-			getIndex(defaultMaxSize), DefaultCapacityPools.maxIndex+1)
+			getIndex(DefaultMaxSize), DefaultCapacityPools.maxIndex+1)
 	}
 
-	buf := Make(defaultMaxSize + 1)
+	buf := Make(DefaultMaxSize + 1)
 	if len(buf) != 0 {
 		t.Fatalf("expect buffer len is 0, but got %d", len(buf))
 	}
-	if cap(buf) <= defaultMaxSize {
-		t.Fatalf("expect buffer cap > %d, but got %d", defaultMaxSize, cap(buf))
+	if cap(buf) <= DefaultMaxSize {
+		t.Fatalf("expect buffer cap > %d, but got %d", DefaultMaxSize, cap(buf))
 	}
 	if Release(buf) {
 		t.Fatal("expect to release the buffer failure, but not")
@@ -202,8 +202,8 @@ func TestCapacityPools_Default(t *testing.T) {
 	if len(buf) != 0 {
 		t.Fatalf("expect buffer len is 0, but got %d", len(buf))
 	}
-	if cap(buf) != defaultMaxSize {
-		t.Fatalf("expect buffer cap is %d, but got %d", defaultMaxSize, cap(buf))
+	if cap(buf) != DefaultMaxSize {
+		t.Fatalf("expect buffer cap is %d, but got %d", DefaultMaxSize, cap(buf))
 	}
 
 	len0 := make([]byte, 0, 8)
@@ -226,7 +226,7 @@ func TestCapacityPools_Default(t *testing.T) {
 		t.Fatal("expect to release the buffer successfully, but not")
 	}
 
-	newBuf := New(defaultMaxSize)
+	newBuf := New(DefaultMaxSize)
 	if fmt.Sprintf("%p", newBuf) != fmt.Sprintf("%p", buf) {
 		t.Fatal("expect the newBuf is the buf, but not")
 	}
@@ -299,7 +299,7 @@ func TestCapacityPools_Default(t *testing.T) {
 		t.Fatal("expect to release the buffer failure, but not")
 	}
 
-	InitDefaultPools(defaultMinSize, defaultMaxSize)
+	InitDefaultPools(DefaultMinSize, DefaultMaxSize)
 }
 
 func TestNewBytesString(t *testing.T) {
